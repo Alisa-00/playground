@@ -1,0 +1,5 @@
+*/bin
+*/obj
+*_misc/*/bin
+*_misc/*/obj
+*/*.db
