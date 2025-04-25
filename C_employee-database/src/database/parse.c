@@ -32,7 +32,7 @@ void output_file(struct dbheader_t *dbHeader, struct employee_t *dbEmployeeList,
 
 
 
-    // unpack header and write into file
+    // pack header for writing into output file
     db_header_copy->magic = htonl(db_header_copy->magic);
     db_header_copy->version = htons(db_header_copy->version);
     db_header_copy->count = htons(db_header_copy->count);
@@ -54,7 +54,7 @@ void output_file(struct dbheader_t *dbHeader, struct employee_t *dbEmployeeList,
         return;
     }
 
-    // unpack employee data, write and repack for later use
+    // pack employee data
     int i=0;
     for (i=0;i<dbHeaderCount;i++) {
         employees_copy[i].id = htonl(employees_copy[i].id);
@@ -70,8 +70,8 @@ void output_file(struct dbheader_t *dbHeader, struct employee_t *dbEmployeeList,
     free(db_header_copy);
     free(employees_copy);
 
-    // delete db file, rename temp file to db filename
-    // avoids leftover data at the end when the output file is smaller than the current db file
+    // replace current db file with newly outputted file
+    // prevents leftover data at the end if the file decreases in size
     close(tempFileDescriptor);
     remove(filename);
     rename(TEMP_DB_FILE, filename);
@@ -261,7 +261,7 @@ int remove_employee(struct dbheader_t *dbHeader, struct employee_t **employees, 
             for (int j = i; j < count - 1; ++j) {
                 employeeList[j] = employeeList[j + 1];  // Shift employees left
 
-                // decrease i once in case of consecutive removals
+                // repeat index in case of consecutive removals
                 if (j == count - 2) {
                     i--;
                 }
