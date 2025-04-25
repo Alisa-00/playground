@@ -26,7 +26,7 @@ void close_client(ClientState_t *client) {
 	close(client->fd);
 	client->fd = -1;
     client->state = STATE_DISCONNECTED;
-    printf("Client disconnected!\n");
+    printf("Client disconnected!\n\n");
 
 }
 
@@ -129,7 +129,7 @@ void poll_loop(unsigned short port, struct dbheader_t *database_header, struct e
                 ssize_t bytes_read = read(fd, &ClientStates[slot].buffer, sizeof(ClientStates[slot].buffer));
 
                 if (bytes_read <= 0) {
-					perror("read");
+					printf("No new messages from client!\n");
 					close_client(&ClientStates[slot]);
 					nfds--;
 					continue;

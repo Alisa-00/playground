@@ -109,7 +109,6 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
 
         fsm_reply_hello(client, header);
         client->state = STATE_MSG;
-        printf("Client upgraded to STATE_MSG\n");
     }
 
     if (client->state == STATE_MSG) {
@@ -125,7 +124,6 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
 
             printf("Employees with name %s have been removed succesfully!\n", employee->name);
             fsm_reply_del(client, header);
-            client->state = STATE_DISCONNECTED;
         }
 
         if (header->type == MSG_EMPLOYEE_ADD_REQ) {
@@ -140,7 +138,6 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
 
             printf("Employee was added succesfully!\n");
             fsm_reply_add(client, header);
-            client->state = STATE_DISCONNECTED;
             output_file(database_header, *employees, filepath);
 
         }
@@ -148,7 +145,6 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
         if (header->type == MSG_EMPLOYEE_LIST_REQ) {
             printf("Sending employee list..\n");
             fsm_reply_list(client, header, database_header, *employees);
-            client->state = STATE_DISCONNECTED;
         }
     }
 
