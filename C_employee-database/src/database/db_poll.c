@@ -56,8 +56,15 @@ void fsm_reply_err(ClientState_t *client, db_protocol_header_t *header) {
     write(client->fd, header, sizeof(db_protocol_header_t));
 }
 
-void fsm_reply_add(ClientState_t *client, db_protocol_header_t *header) {
+void fsm_reply_add_employee(ClientState_t *client, db_protocol_header_t *header) {
     header->type = htonl(MSG_EMPLOYEE_ADD_RESP);
+    header->len = htons(1);
+
+    write(client->fd, header, sizeof(db_protocol_header_t));
+}
+
+void fsm_reply_add_hours(ClientState_t *client, db_protocol_header_t *header) {
+    header->type = htonl(MSG_EMPLOYEE_ADD_HRS_RESP);
     header->len = htons(1);
 
     write(client->fd, header, sizeof(db_protocol_header_t));
@@ -138,7 +145,7 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
             }
 
             printf("Employee was added succesfully!\n");
-            fsm_reply_add(client, header);
+            fsm_reply_add_employee(client, header);
             output_file(database_header, *employees, filepath);
 
         }
@@ -146,6 +153,21 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
         if (header->type == MSG_EMPLOYEE_LIST_REQ) {
             printf("Sending employee list..\n");
             fsm_reply_list(client, header, database_header, *employees);
+        }
+
+        if (header->type == MSG_EMPLOYEE_ADD_HRS_REQ) {
+            db_protocol_add_hrs_req* employee = (db_protocol_add_hrs_req*)&header[1];
+            printf("Adding hours to employee: %s\n", employee->data);
+
+            if (add_hours(database_header, *employees, (char*)employee->data) == STATUS_ERROR) {
+                printf("Error adding hours!\n");
+                fsm_reply_err(client, header);
+                return STATUS_ERROR;
+            }
+
+            printf("Hours were added successfully!\n");
+            fsm_reply_add_hours(client, header);
+            output_file(database_header, *employees, filepath);
         }
     }
 

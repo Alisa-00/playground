@@ -234,12 +234,12 @@ int add_employee(struct dbheader_t *dbHeader, struct employee_t **employees_poin
 
 int add_hours(struct dbheader_t *dbHeader, struct employee_t *employees, char *addString) {
 
-    char *employeeName = strtok(addString, ",");
-    int employeeHours = atoi(strtok(NULL, ","));
+    unsigned int employeeId = atoi(strtok(addString, ","));
+    unsigned int employeeHours = atoi(strtok(NULL, ","));
 
     int i=0;
     for (i=0;i<dbHeader->count;i++) {
-        if (strcmp(employees[i].name, employeeName) == 0) {
+        if (employees[i].id == employeeId) {
             employees[i].hours += employeeHours;
             return STATUS_SUCCESS;
         }

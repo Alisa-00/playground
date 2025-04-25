@@ -14,11 +14,16 @@
 #include "db_poll.h"
 
 void print_usage(char *argv[]) {
-	printf("Usage: %s [-n] [-f FILE]\n", argv[0]);
+	printf("Usage: %s [-n] [-f FILE] [-p PORT]\n", argv[0]);
 	printf("  -n  -  create new database file\n");
 	printf("  -f  -  (required) path to database file\n");
-	printf("  -p  -  (required) port to listen to\n");
-	return;
+	printf("  -p  -  port to listen to. if absent server will run commands and exit\n");
+	printf("  -l  -  list employees\n");
+	printf("  -t [id] -  remove employee by id\n");
+	printf("  -r [name] -  remove employees by name\n");
+	printf("  -h [name],[hours] - add hours to employee by id\n");
+	printf("  -a [name],[address],[hours] -  add employee to the database\n");
+	printf("  -e [id],[name],[address],[hours] - edit employee by id. blank fields will be left unchanged\n");
 }
 
 void close_client(ClientState_t *client) {

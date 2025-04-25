@@ -14,6 +14,8 @@ typedef enum {
     MSG_EMPLOYEE_LIST_RESP,
     MSG_EMPLOYEE_ADD_REQ,
     MSG_EMPLOYEE_ADD_RESP,
+    MSG_EMPLOYEE_ADD_HRS_REQ,
+    MSG_EMPLOYEE_ADD_HRS_RESP,
     MSG_EMPLOYEE_DEL_REQ,
     MSG_EMPLOYEE_DEL_RESP,
     MSG_ERROR
@@ -35,6 +37,10 @@ typedef struct {
 typedef struct {
 	uint8_t data[1024];
 } db_protocol_add_req;
+
+typedef struct {
+    uint8_t data[1024];
+} db_protocol_add_hrs_req;
 
 typedef struct {
     uint32_t id;

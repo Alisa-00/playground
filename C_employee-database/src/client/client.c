@@ -53,7 +53,7 @@ int send_hello(int socket) {
     return STATUS_SUCCESS;
 }
 
-int send_add_req(int socket, char *employee_string) {
+int send_add_employee_req(int socket, char *employee_string) {
     char message_buffer[BUFFER_SIZE] = {0};
 
     db_protocol_header_t *header = (db_protocol_header_t*)message_buffer;
@@ -81,12 +81,53 @@ int send_add_req(int socket, char *employee_string) {
     header->len = ntohs(header->len);
 
     if (header->type == MSG_ERROR) {
-        printf("Error received, add request failed.\n");
+        printf("Error received, add employee request failed.\n");
         return STATUS_ERROR;
     }
 
     if (header->type == MSG_EMPLOYEE_ADD_RESP) {
         printf("Employee was added succesfully!\n");
+    }
+
+    return STATUS_SUCCESS;
+}
+
+int send_add_hrs_id_req(int socket, char *hrsstring) {
+    char message_buffer[BUFFER_SIZE] = {0};
+
+    db_protocol_header_t *header = (db_protocol_header_t*)message_buffer;
+    header->type = MSG_EMPLOYEE_ADD_HRS_REQ;
+    header->len = 1;
+
+    db_protocol_add_hrs_req *employee = (db_protocol_add_hrs_req*)&header[1];
+    strncpy(&employee->data[0], hrsstring, sizeof(employee->data));
+
+    header->type = htonl(header->type);
+    header->len = htons(header->len);
+
+    // Send add request and read response
+    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_add_hrs_req));
+    ssize_t bytes_read = read(socket, message_buffer, sizeof(message_buffer));
+
+    // handle response
+    if (bytes_read <= 0) {
+        perror("read");
+        return STATUS_ERROR;
+    }
+
+    header = (db_protocol_header_t*)message_buffer;
+    header->type = ntohl(header->type);
+    header->len = ntohs(header->len);
+
+    if (header->type == MSG_ERROR) {
+        printf("Error received, add hours request failed.\n");
+        return STATUS_ERROR;
+    }
+
+    if (header->type == MSG_EMPLOYEE_ADD_HRS_RESP) {
+        printf("Hours have been added succesfully:\n");
+        //db_protocol_add_hrs_resp *employee = (db_protocol_add_hrs_resp*)&header[1];
+        //printf("%d:\t%s, %s, %d\n", employee->id, employee->name, employee->address, employee->hours);
     }
 
     return STATUS_SUCCESS;
@@ -138,7 +179,7 @@ int send_list_req(int socket) {
     return STATUS_SUCCESS;
 }
 
-int send_del_req(int socket, char *employee_name) {
+int send_del_name_req(int socket, char *employee_name) {
     char message_buffer[BUFFER_SIZE] = {0};
 
     db_protocol_header_t *header = (db_protocol_header_t*)message_buffer;
@@ -177,9 +218,30 @@ int send_del_req(int socket, char *employee_name) {
     return STATUS_SUCCESS;
 }
 
+int send_del_id_req(int socket, int id) {
+    return STATUS_SUCCESS;
+}
+
+int send_edit_id_req(int socket, int id) {
+    return STATUS_SUCCESS;
+}
+
+void print_usage(char *argv[]) {
+	printf("Usage: %s [-h HOST] [-p PORT]\n", argv[0]);
+	printf("  -h  -  (required) host to connect to\n");
+	printf("  -p  -  (required) port to connect to\n");
+	printf("  -l  -  list employees\n");
+	printf("  -t [id] -  remove employee by id\n");
+	printf("  -r [name] -  remove employees by name\n");
+	printf("  -s [name],[hours] - add hours to employee by id\n");
+	printf("  -a [name],[address],[hours] -  add employee to the database\n");
+	printf("  -e [id],[name],[address],[hours] - edit employee by id. blank fields will be left unchanged\n");
+}
+
 int main(int argc, char *argv[]) {
 
     char *addarg = NULL;
+    char *hrsarg = NULL;
     char *delarg = NULL;
     char *portarg = NULL;
     char *hostarg = NULL;
@@ -187,12 +249,12 @@ int main(int argc, char *argv[]) {
     unsigned short port = 0;
 
     int c;
-    while ((c = getopt(argc, argv, "p:h:a:d:l")) != -1) {
+    while ((c = getopt(argc, argv, "p:h:a:r:ls:")) != -1) {
         switch(c) {
             case 'a':
                 addarg = optarg;
                 break;
-            case 'd':
+            case 'r':
                 delarg = optarg;
                 break;
             case 'h':
@@ -205,6 +267,9 @@ int main(int argc, char *argv[]) {
                 portarg = optarg;
                 port = atoi(portarg);
                 break;
+            case 's':
+                hrsarg = optarg;
+                break;
             case '?':
                 printf("Unknown option: -%c\n", c);
                 break;
@@ -214,12 +279,12 @@ int main(int argc, char *argv[]) {
     }
 
     if (port == 0) {
-        printf("Bad port: %s\n", portarg);
+        print_usage(argv);
         return STATUS_ERROR;
     }
 
     if (hostarg == NULL) {
-        printf("Must specify host with -h\n");
+        print_usage(argv);
         return STATUS_ERROR;
     }
 
@@ -247,16 +312,24 @@ int main(int argc, char *argv[]) {
     }
 
     if (addarg != NULL) {
-        if (send_add_req(server_socket, addarg) == STATUS_ERROR) {
+        if (send_add_employee_req(server_socket, addarg) == STATUS_ERROR) {
             printf("Error trying to add new employee!\n");
             close(server_socket);
             return STATUS_ERROR;
         }
     }
 
+    if (hrsarg != NULL) {
+        if (send_add_hrs_id_req(server_socket, hrsarg) == STATUS_ERROR) {
+            printf("Error with add hours request!\n");
+            close(server_socket);
+            return STATUS_ERROR;
+        }
+    }
+
     if (delarg != NULL) {
-        if (send_del_req(server_socket, delarg) == STATUS_ERROR) {
-            printf("Error trying to add new employee!\n");
+        if (send_del_name_req(server_socket, delarg) == STATUS_ERROR) {
+            printf("Error with del employee by name request!\n");
             close(server_socket);
             return STATUS_ERROR;
         }
@@ -264,7 +337,7 @@ int main(int argc, char *argv[]) {
 
     if (list > 0) {
         if (send_list_req(server_socket) == STATUS_ERROR) {
-            printf("Error trying to add new employee!\n");
+            printf("Error with list employees request!\n");
             close(server_socket);
             return STATUS_ERROR;
         }
