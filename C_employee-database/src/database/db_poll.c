@@ -75,6 +75,7 @@ void fsm_reply_list(ClientState_t *client, db_protocol_header_t *header, struct 
     for (i=0; i<database_header->count; i++) {
         strncpy(employee->name, employees[i].name, sizeof(employees[0].name));
         strncpy(employee->address, employees[i].address, sizeof(employees[0].address));
+        employee->id = htonl(employees[i].id);
         employee->hours = htonl(employees[i].hours);
         write(client->fd, &header[1], sizeof(db_protocol_list_resp));
     }

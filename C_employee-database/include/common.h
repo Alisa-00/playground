@@ -37,6 +37,7 @@ typedef struct {
 } db_protocol_add_req;
 
 typedef struct {
+    uint32_t id;
 	uint8_t name[256];
     uint8_t address[256];
     uint32_t hours;

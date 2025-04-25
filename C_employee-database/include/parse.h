@@ -8,10 +8,12 @@ struct dbheader_t {
     unsigned int magic;
     unsigned short version;
     unsigned short count;
+    unsigned int id;
     unsigned int filesize;
 };
 
 struct employee_t {
+    unsigned int id;
     char name[256];
     char address[256];
     unsigned int hours;

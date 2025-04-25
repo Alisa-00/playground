@@ -36,6 +36,7 @@ void output_file(struct dbheader_t *dbHeader, struct employee_t *dbEmployeeList,
     db_header_copy->magic = htonl(db_header_copy->magic);
     db_header_copy->version = htons(db_header_copy->version);
     db_header_copy->count = htons(db_header_copy->count);
+    db_header_copy->id = htonl(db_header_copy->id);
     db_header_copy->filesize = htonl(db_header_copy->filesize);
 
     if (lseek(tempFileDescriptor, 0, SEEK_SET) == STATUS_ERROR) {
@@ -56,6 +57,7 @@ void output_file(struct dbheader_t *dbHeader, struct employee_t *dbEmployeeList,
     // unpack employee data, write and repack for later use
     int i=0;
     for (i=0;i<dbHeaderCount;i++) {
+        employees_copy[i].id = htonl(employees_copy[i].id);
         employees_copy[i].hours = htonl(employees_copy[i].hours);
 
         lseek(tempFileDescriptor, sizeof(struct dbheader_t) + sizeof(struct employee_t) * i, SEEK_SET);
@@ -95,6 +97,7 @@ int create_db_header(int fileDescriptor, struct dbheader_t **headerOut) {
     header->magic = HEADER_MAGIC;
     header->version = HEADER_VERSION;
     header->count = 0;
+    header->id = 0;
     header->filesize = sizeof(struct dbheader_t);
 
     *headerOut = header;
@@ -125,6 +128,7 @@ int validate_db_header(int fileDescriptor, struct dbheader_t **headerOut) {
     header->magic = ntohl(header->magic);
     header->version = ntohs(header->version);
     header->count = ntohs(header->count);
+    header->id = ntohl(header->id);
     header->filesize = ntohl(header->filesize);
 
     if (header->magic != HEADER_MAGIC) {
@@ -180,6 +184,7 @@ int read_employees(int fileDescriptor, struct dbheader_t *dbHeader, struct emplo
 
     int i=0;
     for (i=0;i<count;i++) {
+        employees[i].id = ntohl(employees[i].id);
         employees[i].hours = ntohl(employees[i].hours);
     }
 
@@ -208,6 +213,9 @@ int add_employee(struct dbheader_t *dbHeader, struct employee_t **employees_poin
         return STATUS_ERROR;
     }
 
+    // Id for new employee
+    dbHeader->id = dbHeader->id+1;
+
     dbHeader->count = dbHeader->count+1;
 	dbHeader->filesize = (dbHeader->filesize) + sizeof(struct employee_t);
 
@@ -216,6 +224,7 @@ int add_employee(struct dbheader_t *dbHeader, struct employee_t **employees_poin
 
     strncpy(employees[dbHeader->count-1].name, employeeName, sizeof(employees[dbHeader->count-1].name));
     strncpy(employees[dbHeader->count-1].address, employeeAddress, sizeof(employees[dbHeader->count-1].address));
+    employees[dbHeader->count-1].id = dbHeader->id;
     employees[dbHeader->count-1].hours = (unsigned int)atoi(employeeHours);
 
     *employees_pointer = employees;

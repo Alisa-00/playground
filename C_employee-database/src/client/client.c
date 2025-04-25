@@ -128,8 +128,9 @@ int send_list_req(int socket) {
         int i=0;
         for (i=0; i<header->len; i++) {
             read(socket, employee, sizeof(db_protocol_list_resp));
+            employee->id = ntohl(employee->id);
             employee->hours = ntohl(employee->hours);
-            printf("%s, %s, %d\n", employee->name, employee->address, employee->hours);
+            printf("%d:\t%s, %s, %d\n", employee->id, employee->name, employee->address, employee->hours);
         }
 
     }
