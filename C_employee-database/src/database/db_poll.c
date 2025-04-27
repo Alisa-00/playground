@@ -102,6 +102,13 @@ void fsm_reply_del_id(ClientState_t *client, db_protocol_header_t *header) {
     write(client->fd, header, sizeof(db_protocol_header_t));
 }
 
+void fsm_reply_edit(ClientState_t *client, db_protocol_header_t *header) {
+    header->type = htonl(MSG_EMPLOYEE_EDIT_RESP);
+    header->len = htons(1);
+
+    write(client->fd, header, sizeof(db_protocol_header_t));
+}
+
 int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **employees, ClientState_t *client, char* filepath) {
     db_protocol_header_t *header = (db_protocol_header_t*)client->buffer;
     header->type = ntohl(header->type);
@@ -139,6 +146,7 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
 
             printf("Employees with name %s have been removed succesfully!\n", employee->name);
             fsm_reply_del(client, header);
+            output_file(database_header, *employees, filepath);
         }
 
         if (header->type == MSG_EMPLOYEE_DEL_ID_REQ) {
@@ -153,6 +161,21 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
 
             printf("Employees with id %d has been removed succesfully!\n", employee->id);
             fsm_reply_del_id(client, header);
+            output_file(database_header, *employees, filepath);
+        }
+
+        if (header->type == MSG_EMPLOYEE_EDIT_REQ) {
+            db_protocol_edit_req* employee = (db_protocol_edit_req*)&header[1];
+            printf("Editing employee : %s\n", employee->data);
+            if (edit_employee(database_header, *employees, employee->data) == STATUS_ERROR) {
+                printf("Error removing employees!\n");
+                fsm_reply_err(client, header);
+                return STATUS_ERROR;
+            }
+
+            printf("Employee has been edited succesfully!\n");
+            fsm_reply_edit(client, header);
+            output_file(database_header, *employees, filepath);
         }
 
         if (header->type == MSG_EMPLOYEE_ADD_REQ) {

@@ -28,6 +28,6 @@ int add_employee(struct dbheader_t *dbHeader, struct employee_t **employeesOut, 
 int remove_employee(struct dbheader_t *dbHeader, struct employee_t **employees, char *removeString);
 int remove_employee_id(struct dbheader_t *dbHeader, struct employee_t **employees, unsigned int id);
 int add_hours(struct dbheader_t *dbHeader, struct employee_t *employees, char *addString);
-
+int edit_employee(struct dbheader_t *dbHeader, struct employee_t *employees, char *editstring);
 
 #endif

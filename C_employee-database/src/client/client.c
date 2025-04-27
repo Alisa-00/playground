@@ -126,8 +126,6 @@ int send_add_hrs_id_req(int socket, char *hrsstring) {
 
     if (header->type == MSG_EMPLOYEE_ADD_HRS_RESP) {
         printf("Hours have been added succesfully:\n");
-        //db_protocol_add_hrs_resp *employee = (db_protocol_add_hrs_resp*)&header[1];
-        //printf("%d:\t%s, %s, %d\n", employee->id, employee->name, employee->address, employee->hours);
     }
 
     return STATUS_SUCCESS;
@@ -218,7 +216,7 @@ int send_del_name_req(int socket, char *employee_name) {
     return STATUS_SUCCESS;
 }
 
-int send_del_id_req(int socket, int id) {
+int send_del_id_req(int socket, unsigned int id) {
 
     char message_buffer[BUFFER_SIZE] = {0};
 
@@ -259,7 +257,42 @@ int send_del_id_req(int socket, int id) {
     return STATUS_SUCCESS;
 }
 
-int send_edit_id_req(int socket, int id) {
+int send_edit_req(int socket, char *editstring) {
+    char message_buffer[BUFFER_SIZE] = {0};
+
+    db_protocol_header_t *header = (db_protocol_header_t*)message_buffer;
+    header->type = MSG_EMPLOYEE_EDIT_REQ;
+    header->len = 1;
+
+    db_protocol_edit_req *employee = (db_protocol_edit_req*)&header[1];
+    strncpy(&employee->data[0], editstring, sizeof(employee->data));
+
+    header->type = htonl(header->type);
+    header->len = htons(header->len);
+
+    // Send add request and read response
+    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_edit_req));
+    ssize_t bytes_read = read(socket, message_buffer, sizeof(message_buffer));
+
+    // handle response
+    if (bytes_read <= 0) {
+        perror("read");
+        return STATUS_ERROR;
+    }
+
+    header = (db_protocol_header_t*)message_buffer;
+    header->type = ntohl(header->type);
+    header->len = ntohs(header->len);
+
+    if (header->type == MSG_ERROR) {
+        printf("Error received, edit request failed.\n");
+        return STATUS_ERROR;
+    }
+
+    if (header->type == MSG_EMPLOYEE_DEL_RESP) {
+        printf("Employee was updated!\n");
+    }
+
     return STATUS_SUCCESS;
 }
 
@@ -272,7 +305,7 @@ void print_usage(char *argv[]) {
 	printf("  -r [name] -  remove employees by name\n");
 	printf("  -s [name],[hours] - add hours to employee by id\n");
 	printf("  -a [name],[address],[hours] -  add employee to the database\n");
-	printf("  -e [id],[name],[address],[hours] - edit employee by id. blank fields will be left unchanged\n");
+	printf("  -e [id],[name],[address],[hours] - edit employee by id. use '.' for any fields to be left unchanged\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -283,22 +316,19 @@ int main(int argc, char *argv[]) {
     char *delidarg = NULL;
     char *portarg = NULL;
     char *hostarg = NULL;
+    char *editarg = NULL;
     int list = 0;
     unsigned short port = 0;
     unsigned int id = 0;
 
     int c;
-    while ((c = getopt(argc, argv, "a:h:lp:r:s:t:")) != -1) {
+    while ((c = getopt(argc, argv, "a:e:h:lp:r:s:t:")) != -1) {
         switch(c) {
             case 'a':
                 addarg = optarg;
                 break;
-            case 'r':
-                delnamearg = optarg;
-                break;
-            case 't':
-                delidarg = optarg;
-                id = atoi(delidarg);
+            case 'e':
+                editarg = optarg;
                 break;
             case 'h':
                 hostarg = optarg;
@@ -310,8 +340,15 @@ int main(int argc, char *argv[]) {
                 portarg = optarg;
                 port = atoi(portarg);
                 break;
+            case 'r':
+                delnamearg = optarg;
+                break;
             case 's':
                 hrsarg = optarg;
+                break;
+            case 't':
+                delidarg = optarg;
+                id = atoi(delidarg);
                 break;
             case '?':
                 printf("Unknown option: -%c\n", c);
@@ -381,6 +418,14 @@ int main(int argc, char *argv[]) {
     if (delidarg != NULL && id > 0) {
         if (send_del_id_req(server_socket, id) == STATUS_ERROR) {
             printf("Error with delete employee by id request!\n");
+            close(server_socket);
+            return STATUS_ERROR;
+        }
+    }
+
+    if (editarg != NULL) {
+        if (send_edit_req(server_socket, editarg) == STATUS_ERROR) {
+            printf("Error with edit employee request!\n");
             close(server_socket);
             return STATUS_ERROR;
         }

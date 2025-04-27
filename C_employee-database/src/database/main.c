@@ -23,7 +23,7 @@ void print_usage(char *argv[]) {
 	printf("  -r [name] -  remove employees by name\n");
 	printf("  -h [name],[hours] - add hours to employee by id\n");
 	printf("  -a [name],[address],[hours] -  add employee to the database\n");
-	printf("  -e [id],[name],[address],[hours] - edit employee by id. blank fields will be left unchanged\n");
+	printf("  -e [id],[name],[address],[hours] - edit employee by id. use '.' for any fields to be left unchanged\n");
 }
 
 void close_client(ClientState_t *client) {

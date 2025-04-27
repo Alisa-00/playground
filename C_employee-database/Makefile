@@ -52,7 +52,7 @@ testclient3:
 testclient4:
 	echo "Testing edit by id"
 	./$(TARGET_CLI) -h 127.0.0.1 -p 5555 -l
-	./$(TARGET_CLI) -h 127.0.0.1 -p 5555 -e 3,,Heimdallr,
+	./$(TARGET_CLI) -h 127.0.0.1 -p 5555 -e 3,.,Heimdallr,.
 	./$(TARGET_CLI) -h 127.0.0.1 -p 5555 -l
 
 clean:

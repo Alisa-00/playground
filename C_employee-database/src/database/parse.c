@@ -325,3 +325,60 @@ int remove_employee_id(struct dbheader_t *dbHeader, struct employee_t **employee
     dbHeader->filesize = sizeof(struct dbheader_t) + count * sizeof(struct employee_t);
     return STATUS_SUCCESS;
 }
+
+int edit_employee(struct dbheader_t *dbHeader, struct employee_t *employees, char *editstring) {
+
+    char *idString = strtok(editstring, ",");
+    if (idString == NULL) {
+        printf("Error with edit string #1!\n");
+        return STATUS_ERROR;
+    }
+
+    unsigned int employeeId = (unsigned int)atoi(idString);
+
+    printf("%s - %d\n", idString, employeeId);
+
+    char *employeeName = strtok(NULL, ",");
+    if (employeeName == NULL) {
+        printf("Error with edit string #2!\n");
+        return STATUS_ERROR;
+    }
+
+    printf("%s\n", employeeName);
+
+    char *employeeAddress = strtok(NULL, ",");
+    if (employeeAddress == NULL) {
+        printf("Error with edit string #3!\n");
+        return STATUS_ERROR;
+    }
+
+    printf("%s\n", employeeAddress);
+
+    char *employeeHours = strtok(NULL, ",");
+    if (employeeHours == NULL) {
+        printf("Error with edit string #4!\n");
+        return STATUS_ERROR;
+    }
+
+    printf("%s\n", employeeHours);
+
+    int i = 0;
+    for (i = 0; i<dbHeader->count; i++) {
+        if (employees[i].id == employeeId) {
+            if (strcmp(employeeName, ".") != 0) {
+                strncpy(employees[i].name, employeeName, sizeof(employees[i].name));
+                //employees[i]->name = employeeName;
+            }
+            if (strcmp(employeeAddress, ".") != 0) {
+                strncpy(employees[i].address, employeeAddress, sizeof(employees[i].address));
+                //employees[i]->name = employeeName;
+            }
+            if (strcmp(employeeHours, ".") != 0) {
+                employees[i].hours = (unsigned int)atoi(employeeHours);
+            }
+            break;
+        }
+    }
+
+    return STATUS_SUCCESS;
+}

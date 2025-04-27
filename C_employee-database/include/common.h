@@ -20,6 +20,8 @@ typedef enum {
     MSG_EMPLOYEE_DEL_RESP,
     MSG_EMPLOYEE_DEL_ID_REQ,
     MSG_EMPLOYEE_DEL_ID_RESP,
+    MSG_EMPLOYEE_EDIT_REQ,
+    MSG_EMPLOYEE_EDIT_RESP,
     MSG_ERROR
 } db_protocol_type_enum;
 
@@ -58,5 +60,9 @@ typedef struct {
 typedef struct {
 	uint32_t id;
 } db_protocol_del_id_req;
+
+typedef struct {
+    uint8_t data[1024];
+} db_protocol_edit_req;
 
 #endif
