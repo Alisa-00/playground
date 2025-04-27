@@ -63,20 +63,6 @@ void fsm_reply_success(ClientState_t *client, db_protocol_header_t *header, db_p
     write(client->fd, header, sizeof(db_protocol_header_t));
 }
 
-/* void fsm_reply_add_employee(ClientState_t *client, db_protocol_header_t *header) {
-    header->type = htonl(MSG_EMPLOYEE_ADD_RESP);
-    header->len = htons(1);
-
-    write(client->fd, header, sizeof(db_protocol_header_t));
-} */
-
-/* void fsm_reply_add_hours(ClientState_t *client, db_protocol_header_t *header) {
-    header->type = htonl(MSG_EMPLOYEE_ADD_HRS_RESP);
-    header->len = htons(1);
-
-    write(client->fd, header, sizeof(db_protocol_header_t));
-} */
-
 void fsm_reply_list(ClientState_t *client, db_protocol_header_t *header, struct dbheader_t *database_header, struct employee_t *employees) {
 
     header->type = htonl(MSG_EMPLOYEE_LIST_RESP);
@@ -94,27 +80,6 @@ void fsm_reply_list(ClientState_t *client, db_protocol_header_t *header, struct 
         write(client->fd, &header[1], sizeof(db_protocol_list_resp));
     }
 }
-
-/* void fsm_reply_del(ClientState_t *client, db_protocol_header_t *header) {
-    header->type = htonl(MSG_EMPLOYEE_DEL_RESP);
-    header->len = htons(1);
-
-    write(client->fd, header, sizeof(db_protocol_header_t));
-} */
-
-/* void fsm_reply_del_id(ClientState_t *client, db_protocol_header_t *header) {
-    header->type = htonl(MSG_EMPLOYEE_DEL_ID_RESP);
-    header->len = htons(1);
-
-    write(client->fd, header, sizeof(db_protocol_header_t));
-} */
-
-/* void fsm_reply_edit(ClientState_t *client, db_protocol_header_t *header) {
-    header->type = htonl(MSG_EMPLOYEE_EDIT_RESP);
-    header->len = htons(1);
-
-    write(client->fd, header, sizeof(db_protocol_header_t));
-} */
 
 int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **employees, ClientState_t *client, char* filepath) {
     db_protocol_header_t *header = (db_protocol_header_t*)client->buffer;
