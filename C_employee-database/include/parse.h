@@ -26,6 +26,7 @@ int validate_db_header(int fileDescriptor, struct dbheader_t **headerOut);
 int read_employees(int fileDescriptor, struct dbheader_t *dbHeader, struct employee_t **employeesOut);
 int add_employee(struct dbheader_t *dbHeader, struct employee_t **employeesOut, char *addstring);
 int remove_employee(struct dbheader_t *dbHeader, struct employee_t **employees, char *removeString);
+int remove_employee_id(struct dbheader_t *dbHeader, struct employee_t **employees, unsigned int id);
 int add_hours(struct dbheader_t *dbHeader, struct employee_t *employees, char *addString);
 
 

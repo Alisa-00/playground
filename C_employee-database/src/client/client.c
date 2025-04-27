@@ -219,6 +219,43 @@ int send_del_name_req(int socket, char *employee_name) {
 }
 
 int send_del_id_req(int socket, int id) {
+
+    char message_buffer[BUFFER_SIZE] = {0};
+
+    db_protocol_header_t *header = (db_protocol_header_t*)message_buffer;
+    header->type = MSG_EMPLOYEE_DEL_ID_REQ;
+    header->len = 1;
+
+    db_protocol_del_id_req *employee = (db_protocol_del_id_req*)&header[1];
+    employee->id = id;
+
+    header->type = htonl(header->type);
+    header->len = htons(header->len);
+    employee->id = htonl(employee->id);
+
+    // Send add request and read response
+    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_del_id_req));
+    ssize_t bytes_read = read(socket, message_buffer, sizeof(message_buffer));
+
+    // handle response
+    if (bytes_read <= 0) {
+        perror("read");
+        return STATUS_ERROR;
+    }
+
+    header = (db_protocol_header_t*)message_buffer;
+    header->type = ntohl(header->type);
+    header->len = ntohs(header->len);
+
+    if (header->type == MSG_ERROR) {
+        printf("Error received, delete request failed.\n");
+        return STATUS_ERROR;
+    }
+
+    if (header->type == MSG_EMPLOYEE_DEL_RESP) {
+        printf("Employee with id %d has been deleted!\n", id);
+    }
+
     return STATUS_SUCCESS;
 }
 
@@ -242,20 +279,26 @@ int main(int argc, char *argv[]) {
 
     char *addarg = NULL;
     char *hrsarg = NULL;
-    char *delarg = NULL;
+    char *delnamearg = NULL;
+    char *delidarg = NULL;
     char *portarg = NULL;
     char *hostarg = NULL;
     int list = 0;
     unsigned short port = 0;
+    unsigned int id = 0;
 
     int c;
-    while ((c = getopt(argc, argv, "p:h:a:r:ls:")) != -1) {
+    while ((c = getopt(argc, argv, "a:h:lp:r:s:t:")) != -1) {
         switch(c) {
             case 'a':
                 addarg = optarg;
                 break;
             case 'r':
-                delarg = optarg;
+                delnamearg = optarg;
+                break;
+            case 't':
+                delidarg = optarg;
+                id = atoi(delidarg);
                 break;
             case 'h':
                 hostarg = optarg;
@@ -313,7 +356,7 @@ int main(int argc, char *argv[]) {
 
     if (addarg != NULL) {
         if (send_add_employee_req(server_socket, addarg) == STATUS_ERROR) {
-            printf("Error trying to add new employee!\n");
+            printf("Error with add new employee request!\n");
             close(server_socket);
             return STATUS_ERROR;
         }
@@ -327,9 +370,17 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (delarg != NULL) {
-        if (send_del_name_req(server_socket, delarg) == STATUS_ERROR) {
-            printf("Error with del employee by name request!\n");
+    if (delnamearg != NULL) {
+        if (send_del_name_req(server_socket, delnamearg) == STATUS_ERROR) {
+            printf("Error with delete employee by name request!\n");
+            close(server_socket);
+            return STATUS_ERROR;
+        }
+    }
+
+    if (delidarg != NULL && id > 0) {
+        if (send_del_id_req(server_socket, id) == STATUS_ERROR) {
+            printf("Error with delete employee by id request!\n");
             close(server_socket);
             return STATUS_ERROR;
         }

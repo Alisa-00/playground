@@ -288,3 +288,40 @@ int remove_employee(struct dbheader_t *dbHeader, struct employee_t **employees, 
     dbHeader->filesize = sizeof(struct dbheader_t) + count * sizeof(struct employee_t);
     return STATUS_SUCCESS;
 }
+
+int remove_employee_id(struct dbheader_t *dbHeader, struct employee_t **employees, unsigned int id) {
+
+    unsigned short count = dbHeader->count;
+    struct employee_t *employeeList = *employees;
+    bool removed = false;
+
+    int i=0;
+    for (i=0;i<count;i++) {
+        if (employeeList[i].id == id) {
+
+            for (int j = i; j < count - 1; ++j) {
+                employeeList[j] = employeeList[j + 1];  // Shift employees left
+            }
+
+            count--;
+            removed = true;
+            break;
+        }
+    }
+
+    if (!removed) {
+        printf("Employee with id %d does not exist!\n", id);
+        return STATUS_ERROR;
+    }
+
+    struct employee_t *newEmployeeList = realloc(employeeList, count * sizeof(struct employee_t));
+    if (newEmployeeList == NULL && count > 0) {
+        return STATUS_ERROR;
+    }
+
+    *employees = newEmployeeList;
+
+    dbHeader->count = count;
+    dbHeader->filesize = sizeof(struct dbheader_t) + count * sizeof(struct employee_t);
+    return STATUS_SUCCESS;
+}
