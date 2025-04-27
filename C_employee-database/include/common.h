@@ -36,7 +36,7 @@ typedef struct {
 
 typedef struct {
 	uint8_t data[1024];
-} db_protocol_data;
+} db_protocol_data_req;
 
 typedef struct {
     uint32_t id;
@@ -44,10 +44,6 @@ typedef struct {
     uint8_t address[256];
     uint32_t hours;
 } db_protocol_list_resp;
-
-typedef struct {
-	uint8_t name[256];
-} db_protocol_del_req;
 
 typedef struct {
 	uint32_t id;
