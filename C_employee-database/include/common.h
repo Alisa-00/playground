@@ -39,14 +39,14 @@ typedef struct {
 } db_protocol_data_req;
 
 typedef struct {
+	uint32_t id;
+} db_protocol_id_req;
+
+typedef struct {
     uint32_t id;
 	uint8_t name[256];
     uint8_t address[256];
     uint32_t hours;
 } db_protocol_list_resp;
-
-typedef struct {
-	uint32_t id;
-} db_protocol_del_id_req;
 
 #endif

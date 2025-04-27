@@ -122,7 +122,7 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
         }
 
         if (header->type == MSG_EMPLOYEE_DEL_ID_REQ) {
-            db_protocol_del_id_req* employee = (db_protocol_del_id_req*)&header[1];
+            db_protocol_id_req* employee = (db_protocol_id_req*)&header[1];
             employee->id = ntohl(employee->id);
             printf("Removing employees with id: %d\n", employee->id);
             if (remove_employee_id(database_header, employees, employee->id) == STATUS_ERROR) {

@@ -224,7 +224,7 @@ int send_del_id_req(int socket, unsigned int id) {
     header->type = MSG_EMPLOYEE_DEL_ID_REQ;
     header->len = 1;
 
-    db_protocol_del_id_req *employee = (db_protocol_del_id_req*)&header[1];
+    db_protocol_id_req *employee = (db_protocol_id_req*)&header[1];
     employee->id = id;
 
     header->type = htonl(header->type);
@@ -232,7 +232,7 @@ int send_del_id_req(int socket, unsigned int id) {
     employee->id = htonl(employee->id);
 
     // Send add request and read response
-    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_del_id_req));
+    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_id_req));
     ssize_t bytes_read = read(socket, message_buffer, sizeof(message_buffer));
 
     // handle response
