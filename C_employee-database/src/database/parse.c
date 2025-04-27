@@ -336,15 +336,11 @@ int edit_employee(struct dbheader_t *dbHeader, struct employee_t *employees, cha
 
     unsigned int employeeId = (unsigned int)strtoul(idString, NULL, 10);
 
-    printf("%s - %d\n", idString, employeeId);
-
     char *employeeName = strtok(NULL, ",");
     if (employeeName == NULL) {
         printf("Error with edit string #2!\n");
         return STATUS_ERROR;
     }
-
-    printf("%s\n", employeeName);
 
     char *employeeAddress = strtok(NULL, ",");
     if (employeeAddress == NULL) {
@@ -352,26 +348,20 @@ int edit_employee(struct dbheader_t *dbHeader, struct employee_t *employees, cha
         return STATUS_ERROR;
     }
 
-    printf("%s\n", employeeAddress);
-
     char *employeeHours = strtok(NULL, ",");
     if (employeeHours == NULL) {
         printf("Error with edit string #4!\n");
         return STATUS_ERROR;
     }
 
-    printf("%s\n", employeeHours);
-
     int i = 0;
     for (i = 0; i<dbHeader->count; i++) {
         if (employees[i].id == employeeId) {
             if (strcmp(employeeName, ".") != 0) {
                 strncpy(employees[i].name, employeeName, sizeof(employees[i].name));
-                //employees[i]->name = employeeName;
             }
             if (strcmp(employeeAddress, ".") != 0) {
                 strncpy(employees[i].address, employeeAddress, sizeof(employees[i].address));
-                //employees[i]->name = employeeName;
             }
             if (strcmp(employeeHours, ".") != 0) {
                 employees[i].hours = (unsigned int)strtoul(employeeHours, NULL, 10);

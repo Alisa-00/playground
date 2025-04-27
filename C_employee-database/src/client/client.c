@@ -257,7 +257,7 @@ int send_del_id_req(int socket, unsigned int id) {
     return STATUS_SUCCESS;
 }
 
-int send_edit_req(int socket, char *editstring) {
+int send_edit_req(int socket, char *editString) {
     char message_buffer[BUFFER_SIZE] = {0};
 
     db_protocol_header_t *header = (db_protocol_header_t*)message_buffer;
@@ -265,7 +265,7 @@ int send_edit_req(int socket, char *editstring) {
     header->len = 1;
 
     db_protocol_data_req *employee = (db_protocol_data_req*)&header[1];
-    strncpy(&employee->data[0], editstring, sizeof(employee->data));
+    strncpy(&employee->data[0], editString, sizeof(employee->data));
 
     header->type = htonl(header->type);
     header->len = htons(header->len);
@@ -310,13 +310,13 @@ void print_usage(char *argv[]) {
 
 int main(int argc, char *argv[]) {
 
-    char *addarg = NULL;
+    char *addString = NULL;
     char *hrsarg = NULL;
-    char *delnamearg = NULL;
-    char *delidarg = NULL;
+    char *removeNameString = NULL;
+    char *removeIdString = NULL;
     char *portarg = NULL;
     char *hostarg = NULL;
-    char *editarg = NULL;
+    char *editString = NULL;
     int list = 0;
     unsigned short port = 0;
     unsigned int id = 0;
@@ -325,10 +325,10 @@ int main(int argc, char *argv[]) {
     while ((c = getopt(argc, argv, "a:e:h:lp:r:s:t:")) != -1) {
         switch(c) {
             case 'a':
-                addarg = optarg;
+                addString = optarg;
                 break;
             case 'e':
-                editarg = optarg;
+                editString = optarg;
                 break;
             case 'h':
                 hostarg = optarg;
@@ -341,14 +341,14 @@ int main(int argc, char *argv[]) {
                 port = (unsigned short)strtoul(portarg, NULL, 10);
                 break;
             case 'r':
-                delnamearg = optarg;
+                removeNameString = optarg;
                 break;
             case 's':
                 hrsarg = optarg;
                 break;
             case 't':
-                delidarg = optarg;
-                id = (unsigned int)strtoul(delidarg, NULL, 10);
+                removeIdString = optarg;
+                id = (unsigned int)strtoul(removeIdString, NULL, 10);
                 break;
             case '?':
                 printf("Unknown option: -%c\n", c);
@@ -391,8 +391,8 @@ int main(int argc, char *argv[]) {
         return STATUS_ERROR;
     }
 
-    if (addarg != NULL) {
-        if (send_add_employee_req(server_socket, addarg) == STATUS_ERROR) {
+    if (addString != NULL) {
+        if (send_add_employee_req(server_socket, addString) == STATUS_ERROR) {
             printf("Error with add new employee request!\n");
             close(server_socket);
             return STATUS_ERROR;
@@ -407,15 +407,15 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (delnamearg != NULL) {
-        if (send_del_name_req(server_socket, delnamearg) == STATUS_ERROR) {
+    if (removeNameString != NULL) {
+        if (send_del_name_req(server_socket, removeNameString) == STATUS_ERROR) {
             printf("Error with delete employee by name request!\n");
             close(server_socket);
             return STATUS_ERROR;
         }
     }
 
-    if (delidarg != NULL && id > 0) {
+    if (removeIdString != NULL && id > 0) {
         if (send_del_id_req(server_socket, id) == STATUS_ERROR) {
             printf("Error with delete employee by id request!\n");
             close(server_socket);
@@ -423,8 +423,8 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (editarg != NULL) {
-        if (send_edit_req(server_socket, editarg) == STATUS_ERROR) {
+    if (editString != NULL) {
+        if (send_edit_req(server_socket, editString) == STATUS_ERROR) {
             printf("Error with edit employee request!\n");
             close(server_socket);
             return STATUS_ERROR;

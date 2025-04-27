@@ -154,25 +154,31 @@ void poll_loop(unsigned short port, struct dbheader_t *database_header, struct e
 int main(int argc, char *argv[]) {
 
 	char *filepath = NULL;
-	char *addstring = NULL;
+	char *addString = NULL;
+	char *editString = NULL;
 	char *removeString = NULL;
+	char *removeIdString = NULL;
 	char *addHours = NULL;
 	char *portarg = NULL;
 	bool newfile = false;
 	bool listEmployees = false;
 	int flag = 0;
 	unsigned short port = 0;
+	unsigned int id = 0;
 
 	int dbFileDescriptor = -1;
 
 	struct dbheader_t *dbHeader = NULL;
 	struct employee_t *dbEmployeeList = NULL;
 
-	while ((flag = getopt(argc, argv, "a:f:h:lnp:r:")) != -1) {
+	while ((flag = getopt(argc, argv, "a:e:f:h:lnp:r:t:")) != -1) {
 
 		switch(flag) {
 			case 'a':
-				addstring = optarg;
+				addString = optarg;
+				break;
+			case 'e':
+				editString = optarg;
 				break;
 			case 'f':
 				filepath = optarg;
@@ -195,6 +201,10 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'r':
 				removeString = optarg;
+				break;
+			case 't':
+				removeIdString = optarg;
+				id = (unsigned int)strtoul(removeIdString, NULL, 10);
 				break;
 			case '?':
 				break;
@@ -247,14 +257,14 @@ int main(int argc, char *argv[]) {
 	//close until new output
 	close(dbFileDescriptor);
 
-	if (addstring != NULL) {
+	if (addString != NULL) {
 
 		if (dbEmployeeList == NULL) {
 			perror("realloc");
 			return STATUS_ERROR;
 		}
 
-		if (add_employee(dbHeader, &dbEmployeeList, addstring) == STATUS_ERROR) {
+		if (add_employee(dbHeader, &dbEmployeeList, addString) == STATUS_ERROR) {
 			printf("Error trying to add employee\n");
 			return STATUS_ERROR;
 		}
@@ -264,6 +274,20 @@ int main(int argc, char *argv[]) {
 	if (removeString != NULL) {
 		if (remove_employee(dbHeader, &dbEmployeeList, removeString) == STATUS_ERROR) {
 			printf("Error trying to remove employee\n");
+			return STATUS_ERROR;
+		}
+	}
+
+	if (removeIdString != NULL && id > 0) {
+		if (remove_employee_id(dbHeader, &dbEmployeeList, id) == STATUS_ERROR) {
+			printf("Error trying to remove employee by id\n");
+			return STATUS_ERROR;
+		}
+	}
+
+	if (editString != NULL) {
+		if (edit_employee(dbHeader, dbEmployeeList, editString) == STATUS_ERROR) {
+			printf("Error trying to edit employee\n");
 			return STATUS_ERROR;
 		}
 	}
