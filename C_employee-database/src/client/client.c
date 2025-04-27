@@ -338,7 +338,7 @@ int main(int argc, char *argv[]) {
                 break;
             case 'p':
                 portarg = optarg;
-                port = atoi(portarg);
+                port = (unsigned short)strtoul(portarg, NULL, 10);
                 break;
             case 'r':
                 delnamearg = optarg;
@@ -348,7 +348,7 @@ int main(int argc, char *argv[]) {
                 break;
             case 't':
                 delidarg = optarg;
-                id = atoi(delidarg);
+                id = (unsigned int)strtoul(delidarg, NULL, 10);
                 break;
             case '?':
                 printf("Unknown option: -%c\n", c);

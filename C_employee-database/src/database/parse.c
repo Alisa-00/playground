@@ -225,7 +225,7 @@ int add_employee(struct dbheader_t *dbHeader, struct employee_t **employees_poin
     strncpy(employees[dbHeader->count-1].name, employeeName, sizeof(employees[dbHeader->count-1].name));
     strncpy(employees[dbHeader->count-1].address, employeeAddress, sizeof(employees[dbHeader->count-1].address));
     employees[dbHeader->count-1].id = dbHeader->id;
-    employees[dbHeader->count-1].hours = (unsigned int)atoi(employeeHours);
+    employees[dbHeader->count-1].hours = (unsigned int)strtoul(employeeHours, NULL, 10);
 
     *employees_pointer = employees;
 
@@ -234,8 +234,8 @@ int add_employee(struct dbheader_t *dbHeader, struct employee_t **employees_poin
 
 int add_hours(struct dbheader_t *dbHeader, struct employee_t *employees, char *addString) {
 
-    unsigned int employeeId = atoi(strtok(addString, ","));
-    unsigned int employeeHours = atoi(strtok(NULL, ","));
+    unsigned int employeeId = (unsigned int)strtoul(strtok(addString, ","), NULL, 10);
+    unsigned int employeeHours = (unsigned int)strtoul(strtok(NULL, ","), NULL, 10);
 
     int i=0;
     for (i=0;i<dbHeader->count;i++) {
@@ -334,7 +334,7 @@ int edit_employee(struct dbheader_t *dbHeader, struct employee_t *employees, cha
         return STATUS_ERROR;
     }
 
-    unsigned int employeeId = (unsigned int)atoi(idString);
+    unsigned int employeeId = (unsigned int)strtoul(idString, NULL, 10);
 
     printf("%s - %d\n", idString, employeeId);
 
@@ -374,7 +374,7 @@ int edit_employee(struct dbheader_t *dbHeader, struct employee_t *employees, cha
                 //employees[i]->name = employeeName;
             }
             if (strcmp(employeeHours, ".") != 0) {
-                employees[i].hours = (unsigned int)atoi(employeeHours);
+                employees[i].hours = (unsigned int)strtoul(employeeHours, NULL, 10);
             }
             break;
         }

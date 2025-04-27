@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
 	bool newfile = false;
 	bool listEmployees = false;
 	int flag = 0;
-	int port = 0;
+	unsigned short port = 0;
 
 	int dbFileDescriptor = -1;
 
@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'p':
 				portarg = optarg;
-				port = atoi(portarg);
+				port = (unsigned short)strtoul(portarg, NULL, 10);
 				if (port == 0) {
 					printf("bad port: %s\n",portarg);
 				}
