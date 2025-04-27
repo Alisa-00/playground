@@ -36,11 +36,7 @@ typedef struct {
 
 typedef struct {
 	uint8_t data[1024];
-} db_protocol_add_req;
-
-typedef struct {
-    uint8_t data[1024];
-} db_protocol_add_hrs_req;
+} db_protocol_data;
 
 typedef struct {
     uint32_t id;
@@ -56,9 +52,5 @@ typedef struct {
 typedef struct {
 	uint32_t id;
 } db_protocol_del_id_req;
-
-typedef struct {
-    uint8_t data[1024];
-} db_protocol_edit_req;
 
 #endif

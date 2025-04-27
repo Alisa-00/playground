@@ -60,14 +60,14 @@ int send_add_employee_req(int socket, char *employee_string) {
     header->type = MSG_EMPLOYEE_ADD_REQ;
     header->len = 1;
 
-    db_protocol_add_req *employee = (db_protocol_add_req*)&header[1];
+    db_protocol_data *employee = (db_protocol_data*)&header[1];
     strncpy(&employee->data[0], employee_string, sizeof(employee->data));
 
     header->type = htonl(header->type);
     header->len = htons(header->len);
 
     // Send add request and read response
-    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_add_req));
+    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_data));
     ssize_t bytes_read = read(socket, message_buffer, sizeof(message_buffer));
 
     // handle response
@@ -99,14 +99,14 @@ int send_add_hrs_id_req(int socket, char *hrsstring) {
     header->type = MSG_EMPLOYEE_ADD_HRS_REQ;
     header->len = 1;
 
-    db_protocol_add_hrs_req *employee = (db_protocol_add_hrs_req*)&header[1];
+    db_protocol_data *employee = (db_protocol_data*)&header[1];
     strncpy(&employee->data[0], hrsstring, sizeof(employee->data));
 
     header->type = htonl(header->type);
     header->len = htons(header->len);
 
     // Send add request and read response
-    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_add_hrs_req));
+    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_data));
     ssize_t bytes_read = read(socket, message_buffer, sizeof(message_buffer));
 
     // handle response
@@ -264,14 +264,14 @@ int send_edit_req(int socket, char *editstring) {
     header->type = MSG_EMPLOYEE_EDIT_REQ;
     header->len = 1;
 
-    db_protocol_edit_req *employee = (db_protocol_edit_req*)&header[1];
+    db_protocol_data *employee = (db_protocol_data*)&header[1];
     strncpy(&employee->data[0], editstring, sizeof(employee->data));
 
     header->type = htonl(header->type);
     header->len = htons(header->len);
 
     // Send add request and read response
-    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_edit_req));
+    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_data));
     ssize_t bytes_read = read(socket, message_buffer, sizeof(message_buffer));
 
     // handle response

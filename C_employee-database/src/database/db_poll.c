@@ -137,7 +137,7 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
         }
 
         if (header->type == MSG_EMPLOYEE_EDIT_REQ) {
-            db_protocol_edit_req* employee = (db_protocol_edit_req*)&header[1];
+            db_protocol_data* employee = (db_protocol_data*)&header[1];
             printf("Editing employee : %s\n", employee->data);
             if (edit_employee(database_header, *employees, employee->data) == STATUS_ERROR) {
                 printf("Error removing employees!\n");
@@ -151,7 +151,7 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
         }
 
         if (header->type == MSG_EMPLOYEE_ADD_REQ) {
-            db_protocol_add_req* employee = (db_protocol_add_req*)&header[1];
+            db_protocol_data* employee = (db_protocol_data*)&header[1];
             printf("Adding employee: %s\n", employee->data);
 
             if (add_employee(database_header, employees, (char*)employee->data) == STATUS_ERROR) {
@@ -172,7 +172,7 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
         }
 
         if (header->type == MSG_EMPLOYEE_ADD_HRS_REQ) {
-            db_protocol_add_hrs_req* employee = (db_protocol_add_hrs_req*)&header[1];
+            db_protocol_data* employee = (db_protocol_data*)&header[1];
             printf("Adding hours to employee: %s\n", employee->data);
 
             if (add_hours(database_header, *employees, (char*)employee->data) == STATUS_ERROR) {
