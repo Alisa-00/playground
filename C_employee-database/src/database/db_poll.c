@@ -56,19 +56,26 @@ void fsm_reply_err(ClientState_t *client, db_protocol_header_t *header) {
     write(client->fd, header, sizeof(db_protocol_header_t));
 }
 
-void fsm_reply_add_employee(ClientState_t *client, db_protocol_header_t *header) {
+void fsm_reply_success(ClientState_t *client, db_protocol_header_t *header, db_protocol_type_enum type) {
+    header->type = htonl(type);
+    header->len = htons(1);
+
+    write(client->fd, header, sizeof(db_protocol_header_t));
+}
+
+/* void fsm_reply_add_employee(ClientState_t *client, db_protocol_header_t *header) {
     header->type = htonl(MSG_EMPLOYEE_ADD_RESP);
     header->len = htons(1);
 
     write(client->fd, header, sizeof(db_protocol_header_t));
-}
+} */
 
-void fsm_reply_add_hours(ClientState_t *client, db_protocol_header_t *header) {
+/* void fsm_reply_add_hours(ClientState_t *client, db_protocol_header_t *header) {
     header->type = htonl(MSG_EMPLOYEE_ADD_HRS_RESP);
     header->len = htons(1);
 
     write(client->fd, header, sizeof(db_protocol_header_t));
-}
+} */
 
 void fsm_reply_list(ClientState_t *client, db_protocol_header_t *header, struct dbheader_t *database_header, struct employee_t *employees) {
 
@@ -88,26 +95,26 @@ void fsm_reply_list(ClientState_t *client, db_protocol_header_t *header, struct 
     }
 }
 
-void fsm_reply_del(ClientState_t *client, db_protocol_header_t *header) {
+/* void fsm_reply_del(ClientState_t *client, db_protocol_header_t *header) {
     header->type = htonl(MSG_EMPLOYEE_DEL_RESP);
     header->len = htons(1);
 
     write(client->fd, header, sizeof(db_protocol_header_t));
-}
+} */
 
-void fsm_reply_del_id(ClientState_t *client, db_protocol_header_t *header) {
+/* void fsm_reply_del_id(ClientState_t *client, db_protocol_header_t *header) {
     header->type = htonl(MSG_EMPLOYEE_DEL_ID_RESP);
     header->len = htons(1);
 
     write(client->fd, header, sizeof(db_protocol_header_t));
-}
+} */
 
-void fsm_reply_edit(ClientState_t *client, db_protocol_header_t *header) {
+/* void fsm_reply_edit(ClientState_t *client, db_protocol_header_t *header) {
     header->type = htonl(MSG_EMPLOYEE_EDIT_RESP);
     header->len = htons(1);
 
     write(client->fd, header, sizeof(db_protocol_header_t));
-}
+} */
 
 int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **employees, ClientState_t *client, char* filepath) {
     db_protocol_header_t *header = (db_protocol_header_t*)client->buffer;
@@ -145,7 +152,7 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
             }
 
             printf("Employees with name %s have been removed succesfully!\n", employee->name);
-            fsm_reply_del(client, header);
+            fsm_reply_success(client, header, MSG_EMPLOYEE_DEL_RESP);
             output_file(database_header, *employees, filepath);
         }
 
@@ -160,7 +167,7 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
             }
 
             printf("Employees with id %d has been removed succesfully!\n", employee->id);
-            fsm_reply_del_id(client, header);
+            fsm_reply_success(client, header, MSG_EMPLOYEE_DEL_ID_RESP);
             output_file(database_header, *employees, filepath);
         }
 
@@ -174,7 +181,7 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
             }
 
             printf("Employee has been edited succesfully!\n");
-            fsm_reply_edit(client, header);
+            fsm_reply_success(client, header, MSG_EMPLOYEE_EDIT_RESP);
             output_file(database_header, *employees, filepath);
         }
 
@@ -189,7 +196,7 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
             }
 
             printf("Employee was added succesfully!\n");
-            fsm_reply_add_employee(client, header);
+            fsm_reply_success(client, header, MSG_EMPLOYEE_ADD_RESP);
             output_file(database_header, *employees, filepath);
 
         }
@@ -210,7 +217,7 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
             }
 
             printf("Hours were added successfully!\n");
-            fsm_reply_add_hours(client, header);
+            fsm_reply_success(client, header, MSG_EMPLOYEE_ADD_HRS_RESP);
             output_file(database_header, *employees, filepath);
         }
     }
