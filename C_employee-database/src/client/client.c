@@ -18,7 +18,7 @@ int send_hello(int socket) {
     header->len = 1;
 
     //Add protocol version!
-    db_protocol_hello_req *hello = (db_protocol_hello_req*)&header[1];
+    db_protocol_hello *hello = (db_protocol_hello*)&header[1];
     hello->protocol = PROTOCOL_VER;
 
     header->type = htonl(header->type);
@@ -26,7 +26,7 @@ int send_hello(int socket) {
     hello->protocol = htons(hello->protocol);
 
     // Send hello msg and read response
-    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_hello_req));
+    write(socket, message_buffer, sizeof(db_protocol_header_t) + sizeof(db_protocol_hello));
     ssize_t bytes_read = read(socket, message_buffer, sizeof(message_buffer));
 
     // handle response
@@ -45,7 +45,7 @@ int send_hello(int socket) {
     }
 
     if (header->type == MSG_HELLO_RESP) {
-        db_protocol_hello_resp *hello_resp = (db_protocol_hello_resp*)&header[1];
+        db_protocol_hello *hello_resp = (db_protocol_hello*)&header[1];
         hello_resp->protocol = ntohs(hello->protocol);
         printf("Server connected, protocol v%d\n", hello_resp->protocol);
     }

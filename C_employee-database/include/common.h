@@ -32,11 +32,7 @@ typedef struct {
 
 typedef struct {
 	uint16_t protocol;
-} db_protocol_hello_req;
-
-typedef struct {
-	uint16_t protocol;
-} db_protocol_hello_resp;
+} db_protocol_hello;
 
 typedef struct {
 	uint8_t data[1024];

@@ -43,10 +43,10 @@ int find_slot_by_fd(int fd, ClientState_t *ClientStates) {
 void fsm_reply_hello(ClientState_t *client, db_protocol_header_t *header) {
     header->type = htonl(MSG_HELLO_RESP);
     header->len = htons(1);
-    db_protocol_hello_resp *hello = (db_protocol_hello_resp*)&header[1];
+    db_protocol_hello *hello = (db_protocol_hello*)&header[1];
     hello->protocol = htons(PROTOCOL_VER);
 
-    write(client->fd, header, sizeof(db_protocol_header_t) + sizeof(db_protocol_hello_resp));
+    write(client->fd, header, sizeof(db_protocol_header_t) + sizeof(db_protocol_hello));
 }
 
 void fsm_reply_err(ClientState_t *client, db_protocol_header_t *header) {
@@ -93,7 +93,7 @@ int handle_client_fsm(struct dbheader_t *database_header, struct employee_t **em
             return STATUS_ERROR;
         }
 
-        db_protocol_hello_req* hello = (db_protocol_hello_req*)&header[1];
+        db_protocol_hello* hello = (db_protocol_hello*)&header[1];
         hello->protocol = ntohs(hello->protocol);
         if (hello->protocol != PROTOCOL_VER) {
             printf("Protocol version mismatch\n");
