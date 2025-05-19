@@ -1,7 +1,5 @@
 */bin
 */obj
-*_misc/*/bin
-*_misc/*/obj
-*_misc/todo
 */*.db
 */todo
+misc/
