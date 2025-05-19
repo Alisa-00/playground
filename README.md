@@ -1,13 +1,10 @@
 # Playground
 
-A collection of small projects, experiments, and learning exercises in C and assembly. This repository serves as a sandbox for testing ideas, exploring new concepts, and improving programming skills.
-
-Each subdirectory contains focused work on a specific topic or project.
+A collection of small projects, experiments, and learning exercises.
+Each subdirectory contains a specific topic or project.
 
 ## Contents
 
-- `C_employee-database` — Simple file-based employee tracking server/client.
-- `C_misc` — Miscellaneous C tests, including basic networking/socket code.
-- `x86_misc` — Basic x86 assembly practice scripts.
+- `C_employee-database` — Simple file-based employee database server and client for network access to the database.
+- `ARM64_shell` — Minimal shell written in AArch64 assembly.
 
-This repo is primarily for personal learning but kept clean and presentable for sharing.
