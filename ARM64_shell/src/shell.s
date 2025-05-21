@@ -6,6 +6,7 @@ envp: .quad env_path, 0
 .section .bss
 buffer: .skip 256
 argv:   .skip 80
+cmd:	.skip 128
 
 .section .text
 .global _start
@@ -16,6 +17,7 @@ _start:
     ldr x20, =envp
     ldr x21, =buffer
     ldr x22, =argv
+    ldr x23, =cmd
 
 write_prompt:
     mov x0, #1  // stdout
@@ -30,8 +32,9 @@ read_input:
     mov x2, #256
     mov x8, #63 // read syscall
     svc #0
-    b strip_input
 run_command:
+    b strip_input
+_parse:
     bl parse_command
     ldrb w0, [x21]
     cmp w0, #0 // skip execution on empty command
@@ -78,35 +81,36 @@ _strip_loop:
     cmp w3, #'\n'
     beq _remove_newline
     cmp w3, #0 // null char = end of string
-    beq run_command
+    beq _parse
     add x2, x2, #1
     b _strip_loop
 _remove_newline:
     strb wzr, [x21, x2]
-    b run_command
+    b _parse
 
 
 parse_command:
     stp fp, lr, [sp, #-0x10]!
-    mov x0, #0
+    mov x0, #0 // index for loop
     mov x3, #0 // arg count
+    mov x5, #8
     str x21, [x22]
 _find_args:
     ldrb w2, [x21, x0]
-    add x0, x0, #1
     cmp w2, #0 // null means no args
     beq _end_parse
     cmp w2, #' ' // space means args
-    bne _find_args
-    sub x0, x0, #1
+    bne _continue
     strb wzr, [x21, x0] // change space to null
     // store address for args
     add x0, x0, #1
-    add x4, x21, x0
     add x3, x3, #1
-    mov x5, #8
-    mul x5, x5, x3
-    str x4, [x22, x5]
+    add x4, x21, x0
+    mul x6, x5, x3
+    str x4, [x22, x6]
+    b _find_args
+_continue:
+    add x0, x0, #1
     b _find_args
 _end_parse:
     ldp fp, lr, [sp], #0x10
