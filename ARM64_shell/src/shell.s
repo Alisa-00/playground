@@ -5,9 +5,7 @@ envp: .quad env_path, 0
 
 .section .bss
 buffer: .skip 256
-
-.section .data
-argv: .quad 0, 0, 0
+argv:   .skip 80
 
 .section .text
 .global _start
@@ -67,7 +65,9 @@ _clear_buffer:
     bne _clear_buffer
 _clear_argv:
     stp xzr, xzr, [x22]
-    str xzr, [x22, #16]
+    stp xzr, xzr, [x22, #0x10]
+    stp xzr, xzr, [x22, #0x20]
+    stp xzr, xzr, [x22, #0x30]
     b read_input
 
 
@@ -89,6 +89,7 @@ _remove_newline:
 parse_command:
     stp fp, lr, [sp, #-0x10]!
     mov x0, #0
+    mov x3, #0 // arg count
     str x21, [x22]
 _find_args:
     ldrb w2, [x21, x0]
@@ -102,7 +103,11 @@ _find_args:
     // store address for args
     add x0, x0, #1
     add x4, x21, x0
-    str x4, [x22, #8]
+    add x3, x3, #1
+    mov x5, #8
+    mul x5, x5, x3
+    str x4, [x22, x5]
+    b _find_args
 _end_parse:
     ldp fp, lr, [sp], #0x10
     ret
