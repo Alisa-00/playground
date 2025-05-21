@@ -1,5 +1,5 @@
 .section .rodata
-prefix: .asciz "$: "
+prompt: .asciz "$: "
 env_path: .asciz "PATH=/bin"
 envp: .quad env_path, 0
 
@@ -10,89 +10,79 @@ argv: .quad 0, 0, 0
 .section .text
 .global _start
 
-
+// load pointers into memory for use across the program
 _start:
-    ldr x19, =prefix // x19 = prefix pointer
-    ldr x20, =envp   // x20 = envp pointer
-    ldr x21, =buffer // x21 = buffer pointer
-    ldr x22, =argv   // x22 = argv pointer
-main:
-    bl write_prefix
-    bl read_input
-    bl run_command
-    b main
+    ldr x19, =prompt
+    ldr x20, =envp
+    ldr x21, =buffer
+    ldr x22, =argv
 
-write_prefix:
-    stp fp, lr, [sp, #-0x10]!
-    mov x0, #1
-    mov x1, x19 
+write_prompt:
+    mov x0, #1  // stdout
+    mov x1, x19 // prompt
     mov x2, #3
     mov x8, #64 // write syscall
     svc #0
-    ldp fp, lr, [sp], #0x10
-    ret
-
+    b clear_input
 read_input:
-    stp fp, lr, [sp, #-0x10]!
-    bl clear_buffer
-    bl clear_argv
-    mov x0, #0
-    mov x1, x21 
-    mov x2, #256 // buffer length
+    mov x0, #0  // stdin
+    mov x1, x21 // read into buffer
+    mov x2, #256
     mov x8, #63 // read syscall
     svc #0
-    bl strip_input
-    ldp fp, lr, [sp], #0x10
-    ret
+    b strip_input
+run_command:
+    bl parse_command
+    ldrb w0, [x21]
+    cmp w0, #0 // skip execution on empty command
+    beq write_prompt
+_fork_process:
+    mov x0, #0x11
+    mov x1, #0
+    mov x2, #0
+    mov x3, #0
+    mov x4, #0
+    mov x8, #220 // clone syscall
+    svc #0
+    cmp x0, #0
+    beq child_exec
+_wait_exec:
+    mov x0, #-1 // any child
+    mov x1, #0
+    mov x2, #0
+    mov x3, #0
+    mov x8, #260 // wait4 syscall
+    svc #0
+    b write_prompt // loop for new command
 
-clear_buffer:
-    stp fp, lr, [sp, #-0x10]!
+
+clear_input:
     mov x0, #0
-_clear_loop:
+_clear_buffer:
     strb wzr, [x21, x0]
     add x0, x0, 1
     cmp x0, #256
-    bne _clear_loop
-    ldp fp, lr, [sp], #0x10
-    ret
-
-clear_argv:
-    stp fp, lr, [sp, #-0x10]!
+    bne _clear_buffer
+_clear_argv:
     stp xzr, xzr, [x22]
     str xzr, [x22, #16]
-    ldp fp, lr, [sp], #0x10
-    ret
+    b read_input
+
 
 strip_input:
-    stp fp, lr, [sp, #-0x10]!
     mov x2, #0
 _strip_loop:
     ldrb w3, [x21, x2]
     cmp w3, #'\n'
     beq _remove_newline
-    cmp w3, #0 // null char
-    beq _end_loop
+    cmp w3, #0 // null char = end of string
+    beq run_command
     add x2, x2, #1
     b _strip_loop
 _remove_newline:
     strb wzr, [x21, x2]
-_end_loop:
-    ldp fp, lr, [sp], #0x10
-    ret    
+    b run_command
 
-run_command:
-    stp fp, lr, [sp, #-0x10]!
-    bl parse_command
-    ldrb w0, [x21]
-    cmp w0, #0 // empty command
-    beq _end_execution
-    bl fork_process // fork to create child
-    cmp x0, #0
-    beq child_exec
-    bl parent_wait
-_end_execution:
-    ldp fp, lr, [sp], #0x10
-    ret
 
 parse_command:
     stp fp, lr, [sp, #-0x10]!
@@ -115,20 +105,8 @@ _end_parse:
     ldp fp, lr, [sp], #0x10
     ret
 
-fork_process:
-    stp fp, lr, [sp, #-0x10]!
-    mov x0, #0x11
-    mov x1, #0
-    mov x2, #0
-    mov x3, #0
-    mov x4, #0
-    mov x8, #220 // clone syscall
-    svc #0
-    ldp fp, lr, [sp], #0x10
-    ret
 
 child_exec:
-    stp fp, lr, [sp, #-0x10]!
     mov x0, x21 // buffer pointer
     mov x1, x22 // argv pointer
     mov x2, x20 // envp pointer
@@ -136,16 +114,6 @@ child_exec:
     svc #0
     b exit // exit if exec fails
 
-parent_wait:
-    stp fp, lr, [sp, #-0x10]!
-    mov x0, #-1
-    mov x1, #0
-    mov x2, #0
-    mov x3, #0
-    mov x8, #260 // wait4 syscall
-    svc #0
-    ldp fp, lr, [sp], #0x10
-    ret
 
 exit:
     mov x0, #0
