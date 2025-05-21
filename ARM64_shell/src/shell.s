@@ -3,8 +3,10 @@ prompt: .asciz "$: "
 env_path: .asciz "PATH=/bin"
 envp: .quad env_path, 0
 
+.section .bss
+buffer: .skip 256
+
 .section .data
-buffer: .space 256
 argv: .quad 0, 0, 0
 
 .section .text
@@ -119,4 +121,3 @@ exit:
     mov x0, #0
     mov x8, 93
     svc #0
-
