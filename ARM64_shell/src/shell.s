@@ -6,7 +6,7 @@ envp: .quad env_path, 0
 .section .bss
 buffer: .skip 256
 argv:   .skip 80
-cmd:	.skip 128
+cmd:	.skip 64
 
 .section .text
 .global _start
@@ -14,10 +14,11 @@ cmd:	.skip 128
 // load pointers into memory for use across the program
 _start:
     ldr x19, =prompt
-    ldr x20, =envp
+    ldr x20, =env_path
     ldr x21, =buffer
     ldr x22, =argv
     ldr x23, =cmd
+    ldr x24, =envp
 
 write_prompt:
     mov x0, #1  // stdout
@@ -39,6 +40,7 @@ _parse:
     ldrb w0, [x21]
     cmp w0, #0 // skip execution on empty command
     beq write_prompt
+    bl handle_path
 _fork_process:
     mov x0, #0x11
     mov x1, #0
@@ -61,11 +63,17 @@ _wait_exec:
 
 clear_input:
     mov x0, #0
-_clear_buffer:
+_clear_input_buffer:
     strb wzr, [x21, x0]
     add x0, x0, 1
     cmp x0, #256
-    bne _clear_buffer
+    bne _clear_input_buffer
+    mov x0, #0
+_clear_cmd_buffer:
+    strb wzr, [x23, x0]
+    add x0, x0, 1
+    cmp x0, #80
+    bne _clear_cmd_buffer
 _clear_argv:
     stp xzr, xzr, [x22]
     stp xzr, xzr, [x22, #0x10]
@@ -94,6 +102,7 @@ parse_command:
     mov x0, #0 // index for loop
     mov x3, #0 // arg count
     mov x5, #8
+    mov x25, #0
     str x21, [x22]
 _find_args:
     ldrb w2, [x21, x0]
@@ -111,16 +120,75 @@ _find_args:
     b _find_args
 _continue:
     add x0, x0, #1
+    cmp w2, #'/'
+    cinc x25, x25, eq // bool for input already contains path
     b _find_args
 _end_parse:
     ldp fp, lr, [sp], #0x10
     ret
 
+handle_path:
+    stp fp, lr, [sp, #-0x10]!
+    mov x3, #0 // read buffer index
+    mov x4, #5 // read path index, start after PATH=
+    mov x5, #0 // write buffer offset
+    mov x6, #0 // bool for checked all paths
+    cmp x25, #1
+    beq _handle_done
+_path_loop:
+    ldrb w2, [x20, x4]
+    cmp w2, #':'
+    beq _handle_buffer
+    cmp w2, #0
+    beq _path_end
+    strb w2, [x23, x5]
+    add x4, x4, #1
+    add x5, x5, #1
+    b _path_loop
+_path_end:
+    mov x6, #1
+_handle_buffer:
+    mov w0, #'/'
+    strb w0, [x23, x5]
+    add x5, x5, #1
+_buffer_loop:
+    ldrb w2, [x21, x3]
+    cmp w2, #0
+    beq _faccessat
+    strb w2, [x23, x5]
+    add x3, x3, #1
+    add x5, x5, #1
+    b _buffer_loop
+_faccessat:
+    //mov x0, #0 // not needed
+    mov x1, x23
+    mov x2, #0b101 // check for read+exec permissions
+    mov x3, #0
+    mov x8, #48
+    svc #0
+    cmp x0, #0
+    beq _success
+_fail:
+    cmp x6, #0
+    beq _path_loop
+    //print error and restart main loop
+    b write_prompt
+_handle_done: // save path+name into cmd address and (argv[0] if necessary)
+    ldrb w2, [x21, x3]
+    cmp w2, #0
+    beq _success
+    strb w2, [x23, x5]
+    add x3, x3, #1
+    add x5, x5, #1
+    b _handle_done
+_success:
+    ldp fp, lr, [sp], #0x10
+    ret
 
 child_exec:
-    mov x0, x21 // buffer pointer
+    mov x0, x23 // buffer pointer
     mov x1, x22 // argv pointer
-    mov x2, x20 // envp pointer
+    mov x2, x24 // envp pointer
     mov x8, #221 // execve syscall
     svc #0
     b exit // exit if exec fails
