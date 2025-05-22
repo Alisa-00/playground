@@ -40,6 +40,9 @@ _parse:
     ldrb w0, [x21]
     cmp w0, #0 // skip execution on empty command
     beq write_prompt
+    mov x25, #0
+    cmp w0, #'/'
+    cinc x25, x25, eq // bool for absolute path
     bl handle_path
 _fork_process:
     mov x0, #0x11
@@ -102,7 +105,6 @@ parse_command:
     mov x0, #0 // index for loop
     mov x3, #0 // arg count
     mov x5, #8
-    mov x25, #0
     str x21, [x22]
 _find_args:
     ldrb w2, [x21, x0]
@@ -120,8 +122,6 @@ _find_args:
     b _find_args
 _continue:
     add x0, x0, #1
-    cmp w2, #'/'
-    cinc x25, x25, eq // bool for input already contains path
     b _find_args
 _end_parse:
     ldp fp, lr, [sp], #0x10
