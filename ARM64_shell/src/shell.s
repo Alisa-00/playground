@@ -1,5 +1,7 @@
 .section .rodata
 prompt: .asciz "$: "
+path_error: .asciz "command not found\n"
+exec_error: .asciz "error trying to execute command\n"
 env_path: .asciz "PATH=/bin"
 envp: .quad env_path, 0
 
@@ -19,13 +21,12 @@ _start:
     ldr x22, =argv
     ldr x23, =cmd
     ldr x24, =envp
+    ldr x26, =path_error
 
 write_prompt:
-    mov x0, #1  // stdout
     mov x1, x19 // prompt
     mov x2, #3
-    mov x8, #64 // write syscall
-    svc #0
+    bl print
     b clear_input
 read_input:
     mov x0, #0  // stdin
@@ -63,6 +64,13 @@ _wait_exec:
     svc #0
     b write_prompt // loop for new command
 
+print:
+    stp fp, lr, [sp, #-0x10]!
+    mov x0, #1 // stdout
+    mov x8, #64 // write syscall
+    svc #0
+    ldp fp, lr, [sp], #0x10
+    ret
 
 clear_input:
     mov x0, #0
@@ -172,6 +180,9 @@ _fail:
     cmp x6, #0
     beq _path_loop
     //print error and restart main loop
+    mov x1, x26
+    mov x2, #18
+    bl print
     b write_prompt
 _handle_done: // save path+name into cmd address and (argv[0] if necessary)
     ldrb w2, [x21, x3]
@@ -191,6 +202,9 @@ child_exec:
     mov x2, x24 // envp pointer
     mov x8, #221 // execve syscall
     svc #0
+    ldr x1, =exec_error
+    mov x2, #32
+    bl print
     b exit // exit if exec fails
 
 
