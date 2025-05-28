@@ -6,7 +6,7 @@ It takes input from the command line and encodes it into Base64 or decodes Base6
 ## Features
 
 - Encode strings into Base64
-- Decode Base64 strings (WIP)
+- Decode Base64 strings
 - Minimal, dependency-free implementation using Zig standard library
 
 ## Usage
