@@ -26,12 +26,12 @@ zig build-exe main.zig
 ### Encode:
 
 ```sh
-zig build run -- encode "hello"
+zig run -- encode "hello"
 aGVsbG8=
 ```
 
 ### Decode (WIP):
 
 ```sh
-zig build run -- decode "aGVsbG8="
+zig run -- decode "aGVsbG8="
 ```
