@@ -1,6 +1,7 @@
 # Base64 Encoder/Decoder in Zig
 
-A simple command-line tool for Base64 encoding and decoding, written in [Zig](https://ziglang.org/). It takes input from the command line and either encodes it into Base64 or decodes Base64 back into raw data.
+A simple command-line tool for Base64 encoding and decoding, written in [Zig](https://ziglang.org/).
+It takes input from the command line and encodes it into Base64 or decodes Base64 back into raw data.
 
 ## Features
 
