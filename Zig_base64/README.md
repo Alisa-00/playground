@@ -34,4 +34,5 @@ aGVsbG8=
 
 ```sh
 zig run -- decode "aGVsbG8="
+hello
 ```
