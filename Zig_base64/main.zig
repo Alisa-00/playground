@@ -18,6 +18,7 @@ const ERROR_ENCODE = "Error: encoding failed";
 const ERROR_DECODE = "Error: decoding failed";
 const ERROR_ACTION = "Error: unknown action";
 const ERROR_OTHERS = "Unknown error ocurred";
+const ERROR_BASE64 = "Error: Input is not a base64 encoded string";
 
 const BASE64_TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -151,10 +152,13 @@ fn b64Decode(text: []const u8, allocator: std.mem.Allocator) !void {
     var out_idx: u8 = 0;
     while (idx < text.len) : (idx += 4) {
 
-        const byte1: u8 = base64Index(text[idx]) catch 0;
-        const byte2: u8 = base64Index(text[idx+1]) catch 0;
-        const byte3: u8 = base64Index(text[idx+2]) catch 0; //if (text[idx+2] == '=') 0 else text[idx+2];
-        const byte4: u8 = base64Index(text[idx+3]) catch 0; //if (text[idx+3] == '=') 0 else text[idx+3];
+        const aux2 = if (idx+2 >= text.len) '=' else text[idx+2];
+        const aux3 = if (idx+3 >= text.len) '=' else text[idx+3];
+
+        const byte1: u8 = base64Index(text[idx]) catch |err| handleError(err);
+        const byte2: u8 = base64Index(text[idx+1]) catch |err| handleError(err);
+        const byte3: u8 = base64Index(aux2) catch |err| handleError(err);
+        const byte4: u8 = base64Index(aux3) catch |err| handleError(err);
 
         var outbyte1: u8 = byte1 << 2;
         outbyte1 = outbyte1 + (byte2 >> 4);
@@ -190,7 +194,7 @@ fn base64Index(char: u8) !u8 {
     return EncodeDecodeError.NotBase64Character;
 }
 
-fn handleError(err: anyerror) void {
+fn handleError(err: anyerror) noreturn {
 
     var msg: []const u8 = undefined;
 
@@ -198,11 +202,13 @@ fn handleError(err: anyerror) void {
         EncodeDecodeError.EncodeError => { msg = ERROR_ENCODE; },
         EncodeDecodeError.DecodeError => { msg = ERROR_DECODE; },
         EncodeDecodeError.UnknownAction => { msg = ERROR_ACTION; },
+        EncodeDecodeError.NotBase64Character => { msg = ERROR_BASE64; },
         EncodeDecodeError.Other => { msg = ERROR_OTHERS; },
         else => { msg = ERROR_OTHERS; },
     }
 
     std.debug.print("{s}\n", .{msg});
+    std.process.exit(1);
 }
 
 fn printUsage(cmd: []const u8) void {
