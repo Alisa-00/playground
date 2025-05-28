@@ -4,6 +4,7 @@ const EncodeDecodeError = error {
     EncodeError,
     DecodeError,
     UnknownAction,
+    NotBase64Character,
     Other
 };
 
@@ -48,7 +49,7 @@ pub fn main() !void {
             b64Encode(data.?, allocator) catch |err| handleError(err);
         },
         Action.Decode => {
-            b64Decode(data.?) catch |err| handleError(err);
+            b64Decode(data.?, allocator) catch |err| handleError(err);
         },
         Action.Unknown => {
             handleError(EncodeDecodeError.UnknownAction);
@@ -133,9 +134,60 @@ fn b64Encode (text: []const u8, allocator: std.mem.Allocator) !void {
     std.debug.print("{s}\n", .{b64_string});
 }
 
-fn b64Decode(text: []const u8) EncodeDecodeError!void {
-    std.debug.print("text to decode: {s}\n", .{text});
-    return EncodeDecodeError.DecodeError;
+fn b64Decode(text: []const u8, allocator: std.mem.Allocator) !void {
+
+    // 3 chars per 4 b64 chars
+    var out_len = 3 * text.len / 4;
+
+    if (text[text.len-2] == '=') { out_len -=2; }
+    else if (text[text.len-1] == '=') { out_len -= 1; }
+
+    var out_array = try allocator.alloc(u8, out_len);
+    defer allocator.free(out_array);
+    @memset(out_array, 0);
+
+
+    var idx: u8 = 0;
+    var out_idx: u8 = 0;
+    while (idx < text.len) : (idx += 4) {
+
+        const byte1: u8 = base64Index(text[idx]) catch 0;
+        const byte2: u8 = base64Index(text[idx+1]) catch 0;
+        const byte3: u8 = base64Index(text[idx+2]) catch 0; //if (text[idx+2] == '=') 0 else text[idx+2];
+        const byte4: u8 = base64Index(text[idx+3]) catch 0; //if (text[idx+3] == '=') 0 else text[idx+3];
+
+        var outbyte1: u8 = byte1 << 2;
+        outbyte1 = outbyte1 + (byte2 >> 4);
+
+        var outbyte2: u8 = byte2 << 4;
+        outbyte2 = outbyte2 + (byte3 >> 2);
+
+        var outbyte3: u8 = byte3 << 6;
+        outbyte3 = outbyte3 + byte4;
+
+        out_array[out_idx] = outbyte1;
+
+        if (out_idx+1 >= out_array.len) break;
+        out_array[out_idx+1] = outbyte2;
+
+        if (out_idx+2 >= out_array.len) break;
+        out_array[out_idx+2] = outbyte3;
+
+        out_idx += 3;
+    }
+
+    std.debug.print("{s}\n", .{out_array});
+}
+
+fn base64Index(char: u8) !u8 {
+
+    if (char == '=') return 64;
+
+    for (0..63) |i| {
+        if (char == BASE64_TABLE[i]) return @intCast(i);
+    }
+
+    return EncodeDecodeError.NotBase64Character;
 }
 
 fn handleError(err: anyerror) void {
