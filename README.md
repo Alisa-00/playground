@@ -7,4 +7,4 @@ Each subdirectory contains a specific topic or project.
 
 - `C_employee-database` — Simple file-based employee database server and client for network access to the database.
 - `ARM64_shell` — Minimal shell written in AArch64 assembly.
-
+- `Zig_base64` — Base 64 encoder/decoder written in Zig.

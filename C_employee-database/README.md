@@ -11,3 +11,11 @@ The project is meant to be an exercise of file and socket I/O and basic client-s
 - Add, edit, delete, and list employee records
 - Separate server and client components
 - File I/O for persistence
+
+## Build
+
+Uses zig build system to generate binaries for both the db server and client:
+```sh
+zig build
+```
+Will compile and generate the executables under zig-out/
