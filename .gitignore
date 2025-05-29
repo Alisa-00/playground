@@ -1,5 +1,7 @@
 */bin
 */obj
 */*.db
+*/.zig-cache
+*/zig-out
 */todo
 misc/
