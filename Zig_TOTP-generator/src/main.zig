@@ -1,8 +1,6 @@
 const std = @import("std");
-const file = @import("vault");
+const vault = @import("vault");
 const stdout = std.io.getStdOut().writer();
-const Account = file.Account;
-const Vault = file.Vault;
 
 const Action = enum {
     Add,
@@ -25,10 +23,12 @@ pub fn main() !void {
     var args = std.process.args();
     _ = args.next().?;
 
-    const allocator = std.heap.page_allocator;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
 
-    const vlt: Vault = try file.readVault(VAULT_DIR, VAULT_FILENAME, allocator);
-    defer file.cleanVault(vlt, allocator);
+    var vlt = std.StringHashMap([]const u8).init(allocator);
+    try vault.readHMap(VAULT_DIR, VAULT_FILENAME, &vlt, allocator);
+    //defer file.cleanVault(vlt, allocator);
 
 
     const action_arg = args.next() orelse exitError(Error.MissingArguments);
@@ -39,25 +39,27 @@ pub fn main() !void {
             const name = args.next() orelse exitError(Error.MissingArguments);
             const secret = args.next() orelse exitError(Error.MissingArguments);
 
-            addAccount(name, secret, vlt, allocator) catch |err| exitError(err);
+            try vlt.put(name, secret);
             try stdout.print("Added {s} to vault successfully!\n", .{name});
         },
         Action.Get => {
             const name = args.next() orelse exitError(Error.MissingArguments);
+            const secret = vlt.get(name);
 
-            //const totp: []const u8 = getTotp(name, vlt) catch |err| exitError(err);
-            try stdout.print("{s}:\n", .{name});
+            //const totp: []const u8 = getTotp(name, secret) catch |err| exitError(err);
+            try stdout.print("{s}:{s}\n", .{name, secret});
         },
         Action.List => {
-            for (vlt.accounts) |acc| {
-                try stdout.print("Name: {s}\nSecret: {s}\n\n", .{acc.name, acc.secret});
+            var iter = vlt.Iterator();
+            while (iter.next()) |acc| {
+                try stdout.print("Name: {s}\nSecret: {s}\n\n", .{acc.key_ptr.*, acc.valut_ptr.*});
             }
         },
         Action.Unknown => {},
     }
 
 
-    try file.writeVault(VAULT_DIR, VAULT_FILENAME, allocator, vlt.accounts);
+    try file.writeHMap(VAULT_DIR, VAULT_FILENAME, vlt, allocator);
 
 }
 
