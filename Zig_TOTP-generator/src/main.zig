@@ -15,10 +15,11 @@ const Error = error {
     Other,
 };
 
-const VAULT_DIR = std.fs.cwd();
-const VAULT_FILENAME = "vault.json";
 
 pub fn main() !void {
+
+    const vault_directory = std.fs.cwd();
+    const vault_filename = "vault.json";
 
     var args = std.process.args();
     _ = args.next().?;
@@ -27,9 +28,8 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     var vlt = std.StringHashMap([]const u8).init(allocator);
-    try vault.readHMap(VAULT_DIR, VAULT_FILENAME, &vlt, allocator);
+    try vault.readHMap(vault_directory, vault_filename, &vlt, allocator);
     //defer file.cleanVault(vlt, allocator);
-
 
     const action_arg = args.next() orelse exitError(Error.MissingArguments);
     const action = readAction(action_arg);
@@ -39,27 +39,32 @@ pub fn main() !void {
             const name = args.next() orelse exitError(Error.MissingArguments);
             const secret = args.next() orelse exitError(Error.MissingArguments);
 
-            try vlt.put(name, secret);
-            try stdout.print("Added {s} to vault successfully!\n", .{name});
+            if (!vlt.contains(name)) {
+                try vlt.put(name, secret);
+                try vault.writeHMap(vault_directory, vault_filename, vlt, allocator);
+                try stdout.print("Added {s} to vault successfully!\n", .{name});
+            } else {
+                try stdout.print("Could not add '{s}'. already exists in vault!\n", .{name});
+            }
         },
         Action.Get => {
             const name = args.next() orelse exitError(Error.MissingArguments);
-            const secret = vlt.get(name);
+            const secret = vlt.get(name).?;
 
             //const totp: []const u8 = getTotp(name, secret) catch |err| exitError(err);
             try stdout.print("{s}:{s}\n", .{name, secret});
         },
         Action.List => {
-            var iter = vlt.Iterator();
-            while (iter.next()) |acc| {
-                try stdout.print("Name: {s}\nSecret: {s}\n\n", .{acc.key_ptr.*, acc.valut_ptr.*});
+            var iter = vlt.keyIterator();
+            while (iter.next()) |key| {
+                const value = vlt.get(key.*).?;
+                try stdout.print("Name: {s}\nSecret: {s}\n\n", .{key.*, value});
             }
         },
         Action.Unknown => {},
     }
 
 
-    try file.writeHMap(VAULT_DIR, VAULT_FILENAME, vlt, allocator);
 
 }
 
@@ -70,26 +75,6 @@ fn readAction(arg: []const u8) Action {
     else if (std.mem.eql(u8, arg, "list")) { return Action.List; }
     return Action.Unknown;
 
-}
-
-fn addAccount(name: []const u8, secret: []const u8, vlt: Vault, allocator: std.mem.Allocator) !void {
-
-    var new_accs = try allocator.alloc(Account, vlt.accounts.len+1);
-    //comptime { std.debug.print("new_accs {any}\nvlt.accounts {any}\nvlt {any}", .{@TypeOf(new_accs), @TypeOf(vlt.accounts), @TypeOf(vlt)});}
-    @memcpy(new_accs[0..vlt.accounts.len], vlt.accounts);
-    new_accs[vlt.accounts.len] = Account { .name = name, .secret = secret };
-
-    vlt.accounts = new_accs;
-
-}
-
-fn getVault(name: []const u8) Error!Vault {
-    std.debug.print("{s}\n", .{ name });
-    return Error.Other;
-}
-
-fn getVaults() Error!*[]Vault {
-    return Error.Other;
 }
 
 fn exitError(err: anyerror) noreturn {
