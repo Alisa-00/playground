@@ -18,18 +18,21 @@ const Error = error {
 
 pub fn main() !void {
 
+    //define a dir/filename to read from. maybe just .vault.json ?
     const vault_directory = std.fs.cwd();
     const vault_filename = "vault.json";
 
     var args = std.process.args();
     _ = args.next().?;
 
+    // Maybe try a different allocator? arena?
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
+    // Handle any errors, but mostly create the file if it doesnt exist
     var vlt = std.StringHashMap([]const u8).init(allocator);
     try vault.readHMap(vault_directory, vault_filename, &vlt, allocator);
-    //defer file.cleanVault(vlt, allocator);
+    // no need to defer free, program execution ends when this scope exits
 
     const action_arg = args.next() orelse exitError(Error.MissingArguments);
     const action = readAction(action_arg);
@@ -49,6 +52,7 @@ pub fn main() !void {
         },
         Action.Get => {
             const name = args.next() orelse exitError(Error.MissingArguments);
+            //handle the null case properly, print appropriate msg for each case
             const secret = vlt.get(name).?;
 
             //const totp: []const u8 = getTotp(name, secret) catch |err| exitError(err);
@@ -57,6 +61,7 @@ pub fn main() !void {
         Action.List => {
             var iter = vlt.keyIterator();
             while (iter.next()) |key| {
+                // get totp before displaying
                 const value = vlt.get(key.*).?;
                 try stdout.print("Name: {s}\nSecret: {s}\n\n", .{key.*, value});
             }
