@@ -23,7 +23,7 @@ pub fn main() !void {
     const vault_filename = "vault.json";
 
     var args = std.process.args();
-    _ = args.next().?;
+    const cmd = args.next().?;
 
     // Maybe try a different allocator? arena?
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -35,15 +35,15 @@ pub fn main() !void {
     // Read any entries from vault file
     var vlt = std.StringHashMap([]const u8).init(allocator);
     try vault.readHMap(vault_directory, vault_filename, &vlt, allocator);
-    // no need to defer free, program execution ends when this scope exits
+    // no need to defer hashmap or its keys and values, program execution ends when this scope exits
 
-    const action_arg = args.next() orelse exitError(Error.MissingArguments);
+    const action_arg = args.next() orelse exitError(Error.MissingArguments, cmd, true);
     const action = readAction(action_arg);
 
     switch(action) {
         Action.Add => {
-            const name = args.next() orelse exitError(Error.MissingArguments);
-            const secret = args.next() orelse exitError(Error.MissingArguments);
+            const name = args.next() orelse exitError(Error.MissingArguments, cmd, true);
+            const secret = args.next() orelse exitError(Error.MissingArguments, cmd, true);
 
             if (!vlt.contains(name)) {
                 try vlt.put(name, secret);
@@ -54,7 +54,7 @@ pub fn main() !void {
             }
         },
         Action.Get => {
-            const name = args.next() orelse exitError(Error.MissingArguments);
+            const name = args.next() orelse exitError(Error.MissingArguments, cmd, true);
             //handle the null case properly, print appropriate msg for each case
             const secret = vlt.get(name).?;
 
@@ -69,10 +69,10 @@ pub fn main() !void {
                 try stdout.print("Name: {s}\nSecret: {s}\n\n", .{key.*, value});
             }
         },
-        Action.Unknown => {},
+        Action.Unknown => {
+            exitError(Error.UnknownAction, cmd, true);
+        },
     }
-
-
 
 }
 
@@ -85,7 +85,7 @@ fn readAction(arg: []const u8) Action {
 
 }
 
-fn exitError(err: anyerror) noreturn {
+fn exitError(err: anyerror, cmd: []const u8, print_usage: bool) noreturn {
 
     const ERROR_ACTION = "ERROR: Unknown action";
     const ERROR_ARGS = "ERROR: Missing arguments";
@@ -99,6 +99,14 @@ fn exitError(err: anyerror) noreturn {
     };
 
     std.debug.print("{s}\n", .{ msg });
+
+    if (print_usage) {
+        std.debug.print("Usage:\n{s} list\n", .{cmd});
+        std.debug.print("{s} add [account]\n", .{cmd});
+        std.debug.print("{s} get [account]\n", .{cmd});
+
+    }
+
     std.process.exit(0);
 }
 
