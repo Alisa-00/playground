@@ -29,7 +29,10 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    // Handle any errors, but mostly create the file if it doesnt exist
+    // Create vault file if it doesnt exist
+    try vault.checkVault(vault_directory, vault_filename);
+
+    // Read any entries from vault file
     var vlt = std.StringHashMap([]const u8).init(allocator);
     try vault.readHMap(vault_directory, vault_filename, &vlt, allocator);
     // no need to defer free, program execution ends when this scope exits

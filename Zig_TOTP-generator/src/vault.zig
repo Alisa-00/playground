@@ -1,17 +1,36 @@
 const std = @import("std");
 
+pub fn checkVault(dir: std.fs.Dir, filename: []const u8) !void {
+    dir.access(filename, .{}) catch |err| {
+        if (err == std.posix.AccessError.FileNotFound) {
+
+            std.debug.print("Vault file not found. creating new vault file...\n", .{});
+
+            const file = try dir.createFile(filename, .{});
+            const written = try file.write("{}");
+
+            if (written > 0) {
+                std.debug.print("New empty vault file created!\n", .{});
+            }
+
+            file.close();
+        }
+    };
+}
+
 pub fn readHMap(dir: std.fs.Dir, filename: []const u8, hmap: *std.StringHashMap([]const u8), allocator: std.mem.Allocator) !void {
 
     // handle cases: filenotfound, accessdenied, notdir, invalidutf8, nametoolong, systemresources, os openerror
+    //const dir = std.fs.cwd();
     const json_file = try dir.openFile(filename, .{});
     defer json_file.close();
 
     // handle cases: outofmemory, endofstream, inputoutput, streamtoolong (file bigger than maxbytes), os readerror 
     const buffer = try json_file.readToEndAlloc(allocator, 10 * 1024); // 10 KB max
-    // defer
+    //defer allocator.free(buffer);
     // handle cases: outofmemory, unexpectedtoken, syntaxerror, duplicatefield, expectedvalue, expectedcomma, expectedcolon, invalidescape, invalidutf8
     const parse = try std.json.parseFromSlice(std.json.Value, allocator, buffer, .{});
-    // defer
+    //defer parse.deinit();
 
     const obj = parse.value;
 
@@ -25,7 +44,6 @@ pub fn readHMap(dir: std.fs.Dir, filename: []const u8, hmap: *std.StringHashMap(
         try hmap.*.put(key, val);
     }
 }
-
 
 test "read HMap from file" {
 
