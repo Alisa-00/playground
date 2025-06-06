@@ -35,7 +35,8 @@ pub fn main() !void {
     // Read any entries from vault file
     var vlt = std.StringHashMap([]const u8).init(allocator);
     try vault.readHMap(vault_directory, vault_filename, &vlt, allocator);
-    // no need to defer hashmap or its keys and values, program execution ends when this scope exits
+    defer vlt.deinit();
+    defer vault.cleanVault(vlt, allocator);
 
     const action_arg = args.next() orelse exitError(Error.MissingArguments, cmd, true);
     const action = readAction(action_arg);

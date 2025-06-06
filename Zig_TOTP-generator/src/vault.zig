@@ -86,6 +86,15 @@ pub fn writeHMap(dir: std.fs.Dir, filename: []const u8, hmap: std.StringHashMap(
     try json_stream.endObject();
 }
 
+pub fn cleanVault(vlt: std.StringHashMap([]const u8), allocator: std.mem.Allocator) void {
+    var iter = vlt.iterator();
+
+    while (iter.next()) |acc| {
+        allocator.free(acc.key_ptr.*);
+        allocator.free(acc.value_ptr.*);
+    }
+}
+
 test "write test" {
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
