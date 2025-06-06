@@ -20,27 +20,24 @@ pub fn checkVault(dir: std.fs.Dir, filename: []const u8) !void {
 
 pub fn readHMap(dir: std.fs.Dir, filename: []const u8, hmap: *std.StringHashMap([]const u8), allocator: std.mem.Allocator) !void {
 
-    // handle cases: filenotfound, accessdenied, notdir, invalidutf8, nametoolong, systemresources, os openerror
-    //const dir = std.fs.cwd();
     const json_file = try dir.openFile(filename, .{});
     defer json_file.close();
 
     // handle cases: outofmemory, endofstream, inputoutput, streamtoolong (file bigger than maxbytes), os readerror 
     const buffer = try json_file.readToEndAlloc(allocator, 10 * 1024); // 10 KB max
-    //defer allocator.free(buffer);
+    defer allocator.free(buffer);
+
     // handle cases: outofmemory, unexpectedtoken, syntaxerror, duplicatefield, expectedvalue, expectedcomma, expectedcolon, invalidescape, invalidutf8
     const parse = try std.json.parseFromSlice(std.json.Value, allocator, buffer, .{});
-    //defer parse.deinit();
+    defer parse.deinit();
 
     const obj = parse.value;
 
-    // make copies of values to write into hashmap - must free buffer and parse memory
     var iter = obj.object.iterator();
     while (iter.next()) |entry| {
-        const key = entry.key_ptr.*;
-        const val = entry.value_ptr.*.string;
+        const key = try allocator.dupe(u8, entry.key_ptr.*);
+        const val = try allocator.dupe(u8, entry.value_ptr.*.string);
 
-        // handle outofmemory
         try hmap.*.put(key, val);
     }
 }
