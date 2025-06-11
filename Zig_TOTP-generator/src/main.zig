@@ -32,18 +32,20 @@ pub fn main() !void {
     // Create vault file if it doesnt exist
     try vault.checkVault(vault_directory, vault_filename);
 
+    const action_arg = args.next() orelse exitError(Error.MissingArguments, cmd, true);
+    const action = readAction(action_arg);
+    const name_arg: ?[]const u8 = args.next();
+
     // Read any entries from vault file
     var vlt = std.StringHashMap([]const u8).init(allocator);
     try vault.readHMap(vault_directory, vault_filename, &vlt, allocator);
     defer vlt.deinit();
-    defer vault.cleanVault(vlt, allocator);
+    defer vault.cleanVault(vlt, name_arg, allocator);
 
-    const action_arg = args.next() orelse exitError(Error.MissingArguments, cmd, true);
-    const action = readAction(action_arg);
 
     switch(action) {
         Action.Add => {
-            const name = args.next() orelse exitError(Error.MissingArguments, cmd, true);
+            const name = name_arg orelse exitError(Error.MissingArguments, cmd, true);
             const secret = args.next() orelse exitError(Error.MissingArguments, cmd, true);
 
             if (!vlt.contains(name)) {
@@ -55,7 +57,7 @@ pub fn main() !void {
             }
         },
         Action.Get => {
-            const name = args.next() orelse exitError(Error.MissingArguments, cmd, true);
+            const name = name_arg orelse exitError(Error.MissingArguments, cmd, true);
             //handle the null case properly, print appropriate msg for each case
             const secret = vlt.get(name).?;
 
@@ -109,11 +111,4 @@ fn exitError(err: anyerror, cmd: []const u8, print_usage: bool) noreturn {
     }
 
     std.process.exit(0);
-}
-
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // Try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
 }

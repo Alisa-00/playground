@@ -86,10 +86,14 @@ pub fn writeHMap(dir: std.fs.Dir, filename: []const u8, hmap: std.StringHashMap(
     try json_stream.endObject();
 }
 
-pub fn cleanVault(vlt: std.StringHashMap([]const u8), allocator: std.mem.Allocator) void {
+pub fn cleanVault(vlt: std.StringHashMap([]const u8), name: ?[]const u8, allocator: std.mem.Allocator) void {
     var iter = vlt.iterator();
+    const null_name = name == null;
 
     while (iter.next()) |acc| {
+        if (!null_name) {
+            if (std.mem.eql(u8, name.?, acc.key_ptr.*)) continue;
+        }
         allocator.free(acc.key_ptr.*);
         allocator.free(acc.value_ptr.*);
     }
