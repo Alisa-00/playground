@@ -18,9 +18,8 @@ const Error = error {
 
 pub fn main() !void {
 
-    //define a dir/filename to read from. maybe just .vault.json ?
     const vault_directory = std.fs.cwd();
-    const vault_filename = "vault.json";
+    const vault_filename = ".vaultfile";
 
     var args = std.process.args();
     const cmd = args.next().?;
@@ -58,7 +57,6 @@ pub fn main() !void {
         },
         Action.Get => {
             const name = name_arg orelse exitError(Error.MissingArguments, cmd, true);
-            //handle the null case properly, print appropriate msg for each case
             const secret = vlt.get(name).?;
 
             //const totp: []const u8 = getTotp(name, secret) catch |err| exitError(err);
