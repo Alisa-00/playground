@@ -23,11 +23,11 @@ pub fn readHMap(dir: std.fs.Dir, filename: []const u8, hmap: *std.StringHashMap(
     const json_file = try dir.openFile(filename, .{});
     defer json_file.close();
 
-    // handle cases: outofmemory, endofstream, inputoutput, streamtoolong (file bigger than maxbytes), os readerror 
-    const buffer = try json_file.readToEndAlloc(allocator, 10 * 1024); // 10 KB max
+    const file_metadata = try json_file.metadata();
+    const file_size = file_metadata.size();
+    const buffer = try json_file.readToEndAlloc(allocator, file_size);
     defer allocator.free(buffer);
 
-    // handle cases: outofmemory, unexpectedtoken, syntaxerror, duplicatefield, expectedvalue, expectedcomma, expectedcolon, invalidescape, invalidutf8
     const parse = try std.json.parseFromSlice(std.json.Value, allocator, buffer, .{});
     defer parse.deinit();
 
@@ -47,7 +47,6 @@ test "read HMap from file" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    // handle access denied, notdir,pathalreadyexists,nametoolong,filenotfound,systemresources, os mkdirerror,openerror
     const dir = try std.fs.cwd().makeOpenPath("test", .{});
     const filename: []const u8 = "test.json";
 
@@ -67,13 +66,11 @@ pub fn writeHMap(dir: std.fs.Dir, filename: []const u8, hmap: std.StringHashMap(
     var buffer = std.ArrayList(u8).init(allocator);
     defer buffer.deinit();
 
-    // handle accessdenied,pathalreadyexists,nametoolong,notdir,systemresources, os createrror
     var json_file = try dir.createFile(filename, .{});
     defer json_file.close();
 
     const writer = json_file.writer();
     var json_stream = std.json.writeStream(writer, .{});
-    // handle writerror, streamtoolong
     try json_stream.beginObject();
 
     var it = hmap.iterator();
@@ -82,7 +79,6 @@ pub fn writeHMap(dir: std.fs.Dir, filename: []const u8, hmap: std.StringHashMap(
         try json_stream.write(entry.value_ptr.*);
     }
 
-    // handle writerror,streamtoolong
     try json_stream.endObject();
 }
 
