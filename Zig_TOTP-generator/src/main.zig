@@ -24,7 +24,6 @@ pub fn main() !void {
     var args = std.process.args();
     const cmd = args.next().?;
 
-    // Maybe try a different allocator? arena?
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
@@ -35,7 +34,7 @@ pub fn main() !void {
     const action = readAction(action_arg);
     const name_arg: ?[]const u8 = args.next();
 
-    // Read any entries from vault file
+    // Read entries from vault file
     var vlt = std.StringHashMap([]const u8).init(allocator);
     try vault.readHMap(vault_directory, vault_filename, &vlt, allocator);
     defer vlt.deinit();
@@ -59,15 +58,19 @@ pub fn main() !void {
             const name = name_arg orelse exitError(Error.MissingArguments, cmd, true);
             const secret = vlt.get(name).?;
 
-            //const totp: []const u8 = getTotp(name, secret) catch |err| exitError(err);
-            try stdout.print("{s}:{s}\n", .{name, secret});
+            const period: i64 = 30;
+            const digits: u32 = 6;
+            const totp = generateTOTP(secret, period, digits);
+            try stdout.print("{s} - {d}\n", .{name, totp});
         },
         Action.List => {
             var iter = vlt.keyIterator();
             while (iter.next()) |key| {
-                // get totp before displaying
                 const value = vlt.get(key.*).?;
-                try stdout.print("Name: {s}\nSecret: {s}\n\n", .{key.*, value});
+                const period: i64 = 30;
+                const digits: u32 = 6;
+                const totp = generateTOTP(value, period, digits);
+                try stdout.print("{s}: {d}\n", .{key.*, totp});
             }
         },
         Action.Unknown => {
@@ -84,6 +87,35 @@ fn readAction(arg: []const u8) Action {
     else if (std.mem.eql(u8, arg, "list")) { return Action.List; }
     return Action.Unknown;
 
+}
+
+fn generateTOTP(secret: []const u8, period: i64, digits: u32) u32 {
+    const unix_time = std.time.timestamp();
+    const sequence_value = @divFloor(unix_time, period);
+
+    var msg: [8]u8 = undefined;
+    std.mem.writeInt(u64, &msg, @intCast(sequence_value), std.builtin.Endian.big);
+
+    var hmac = std.crypto.auth.hmac.HmacSha1.init(secret);
+    hmac.update(&msg);
+
+    var result: [std.crypto.auth.hmac.HmacSha1.mac_length]u8 = undefined;
+    hmac.final(&result);
+
+    // dynamic truncation
+    const offset = result[result.len-1] & 0x0F;
+
+    const byte1 = @as(u32, result[offset]) << 24;
+    const byte2 = @as(u32, result[offset+1]) << 16;
+    const byte3 = @as(u32, result[offset+2]) << 8;
+    const byte4 = @as(u32, result[offset+3]);
+
+    const bytes = byte1 | byte2 | byte3 | byte4;
+    const result_masked = bytes & 0x7FFFFFFF;
+
+    const output_digits = result_masked % std.math.pow(u32, 10, digits);
+
+    return output_digits;
 }
 
 fn exitError(err: anyerror, cmd: []const u8, print_usage: bool) noreturn {
