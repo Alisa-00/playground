@@ -11,6 +11,12 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const totp_mod = b.createModule(.{
+        .root_source_file = b.path("src/totp.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
     const exe_mod = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
         .target = target,
@@ -23,6 +29,7 @@ pub fn build(b: *std.Build) void {
     });
 
     exe.root_module.addImport("vault", vault_mod);
+    exe.root_module.addImport("totp", totp_mod);
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);
