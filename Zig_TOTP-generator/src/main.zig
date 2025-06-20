@@ -61,7 +61,7 @@ pub fn main() !void {
 
             const period: i64 = 30;
             const digits: u32 = 6;
-            const otp = totp.generateTOTP(secret, period, digits);
+            const otp = totp.generateTOTP(secret, period, digits) catch |err| {exitError(err, cmd, false);};
             try stdout.print("{s} - {d}\n", .{name, otp});
         },
         Action.List => {
@@ -70,7 +70,7 @@ pub fn main() !void {
                 const value = vlt.get(key.*).?;
                 const period: i64 = 30;
                 const digits: u32 = 6;
-                const otp = totp.generateTOTP(value, period, digits);
+                const otp = totp.generateTOTP(value, period, digits) catch |err| {exitError(err, cmd, false);};
                 try stdout.print("{s}: {d}\n", .{key.*, otp});
             }
         },
