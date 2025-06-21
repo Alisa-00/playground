@@ -30,7 +30,7 @@ zig run -- encode "hello"
 aGVsbG8=
 ```
 
-### Decode (WIP):
+### Decode:
 
 ```sh
 zig run -- decode "aGVsbG8="

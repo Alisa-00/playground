@@ -17,20 +17,25 @@ This tool lets you store shared secrets and generate 6-digit time-based codes co
 ### Add a new account
 ```bash
 totp add github JBSWY3DPEHPK3PXP
+Added github to vault successfully!
 ```
 
 ### Get current TOTP code
 ```sh
 totp get github
+github: 123456
 ```
 
 ### List stored accounts
 ```sh
 totp list
+github: 123456
+account: 654321
+...
 ```
 
 ## Notes
-* Secrets are stored in a local file (e.g., ~/.totp-secrets.json).
+* Secrets are stored in a local file (e.g., ~/.vaultfile).
 * Secrets must be Base32-encoded
-* TOTP codes are generated using HMAC-SHA1 by default
+* TOTP codes are generated using HMAC-SHA1
 * This tool was created for learning purposes only. It does not encrypt stored secrets and so it is NOT SECURE to use.

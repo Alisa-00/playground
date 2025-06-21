@@ -62,7 +62,7 @@ pub fn main() !void {
             const period: i64 = 30;
             const digits: u32 = 6;
             const otp = totp.generateTOTP(secret, period, digits) catch |err| {exitError(err, cmd, false);};
-            try stdout.print("{s} - {d}\n", .{name, otp});
+            try stdout.print("{s}: {d}\n", .{name, otp});
         },
         Action.List => {
             var iter = vlt.keyIterator();
