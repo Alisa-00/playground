@@ -7,6 +7,32 @@ pub const decode_error = error {
     NotBase32Character,
 };
 
+pub fn validate(secret: []const u8) bool {
+
+    // if any char that is not found on BASE32 or is not =
+    // any char that is not = that exists AFTER the first = in the string
+    // any string that its length is not a multiple of 8
+    if (secret.len % 8 > 0) return false;
+
+    var padding: bool = false;
+    for (secret) |char| {
+
+        if (std.mem.containsAtLeastScalar(u8, BASE32, 1, char)) {
+            if (padding) return false;
+            continue;
+        }
+
+        if ('=' == char) {
+            padding = true;
+            continue;
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
 fn upper(text: []const u8, allocator: std.mem.Allocator) ![]u8 {
     var buffer: []u8 = try allocator.alloc(u8, text.len);
     for (0..text.len) |i| {

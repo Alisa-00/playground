@@ -13,6 +13,7 @@ const Action = enum {
 const Error = error {
     UnknownAction,
     MissingArguments,
+    BadSecret,
     Other,
 };
 
@@ -48,6 +49,7 @@ pub fn main() !void {
             const secret = args.next() orelse exitError(Error.MissingArguments, cmd, true);
 
             if (!vlt.contains(name)) {
+                if (!totp.validate(secret)) exitError(Error.BadSecret, cmd, false);
                 try vlt.put(name, secret);
                 try vault.writeHMap(vault_directory, vault_filename, vlt, allocator);
                 try stdout.print("Added {s} to vault successfully!\n", .{name});
@@ -95,10 +97,12 @@ fn exitError(err: anyerror, cmd: []const u8, print_usage: bool) noreturn {
     const ERROR_ACTION = "ERROR: Unknown action";
     const ERROR_ARGS = "ERROR: Missing arguments";
     const ERROR_OTHER = "ERROR: Something went wrong";
+    const ERROR_SECRET = "ERROR: Invalid secret format";
 
     const msg = switch(err) {
         Error.UnknownAction => ERROR_ACTION,
         Error.MissingArguments => ERROR_ARGS,
+        Error.BadSecret => ERROR_SECRET,
         Error.Other => ERROR_OTHER,
         else => ERROR_OTHER
     };
