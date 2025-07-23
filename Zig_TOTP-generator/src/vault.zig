@@ -87,11 +87,17 @@ pub fn cleanVault(vlt: std.StringHashMap([]const u8), name: ?[]const u8, allocat
     const null_name = name == null;
 
     while (iter.next()) |acc| {
+        const key = @constCast(acc.key_ptr.*);
+        const val = @constCast(acc.value_ptr.*);
+
+        @memset(key, 0);
+        @memset(val, 0);
+
         if (!null_name) {
-            if (std.mem.eql(u8, name.?, acc.key_ptr.*)) continue;
+            if (std.mem.eql(u8, name.?, key)) continue;
         }
-        allocator.free(acc.key_ptr.*);
-        allocator.free(acc.value_ptr.*);
+        allocator.free(key);
+        allocator.free(val);
     }
 }
 
