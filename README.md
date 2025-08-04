@@ -9,3 +9,4 @@ Each subdirectory contains a specific topic or project.
 - `ARM64_shell` — Minimal shell written in AArch64 assembly.
 - `Zig_base64` — Base 64 encoder/decoder written in Zig.
 - `Zig_TOTP-generator` — Stores accounts/secrets and generates TOTP for them.
+- `GO_Weather` — CLI app for displaying the weather
