@@ -19,6 +19,32 @@ type Weather struct {
 	Desc string
 }
 
+type Location struct {
+	City      string
+	Country   string
+	Latitude  float64
+	Longitude float64
+}
+
+func (loc Location) getQuerySubstring() string {
+	if loc.Latitude != 0 || loc.Longitude != 0 {
+		return fmt.Sprintf("lat=%f&lon=%f", loc.Latitude, loc.Longitude)
+	}
+
+	if loc.City != "" {
+		if loc.Country != "" {
+			return fmt.Sprintf("q=%s,%s", strings.ReplaceAll(loc.City, " ", "+"), loc.Country)
+		}
+		return fmt.Sprintf("q=%s", strings.ReplaceAll(loc.City, " ", "+"))
+	}
+
+	if loc.Country != "" {
+		return fmt.Sprintf("q=%s", loc.Country)
+	}
+
+	return ""
+}
+
 type WeatherResponse struct {
 	Name string `json:"name"`
 	Main struct {
@@ -45,14 +71,15 @@ func getApiKey() (string, error) {
 	return strings.TrimSpace(string(data)), nil
 }
 
-func GetWeather(city string) (Weather, error) {
+func GetWeather(loc Location) (Weather, error) {
 
 	const url string = URL
 	apiKey, err := getApiKey()
 	if err != nil {
 		return Weather{}, fmt.Errorf("API Key not found")
 	}
-	query := fmt.Sprintf("%s?q=%s&appid=%s&units=metric", url, strings.ReplaceAll(city, " ", "+"), apiKey)
+	locationParams := loc.getQuerySubstring()
+	query := fmt.Sprintf("%s?%s&appid=%s&units=metric", url, locationParams, apiKey)
 
 	resp, err := http.Get(query)
 	if err != nil {
