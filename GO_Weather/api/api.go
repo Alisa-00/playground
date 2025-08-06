@@ -14,9 +14,11 @@ import (
 const URL string = "http://api.openweathermap.org/data/2.5/weather"
 
 type Weather struct {
-	City string
-	Temp float64
-	Desc string
+	City    string
+	Country string
+	Temp    float64
+	Feels   float64
+	Desc    string
 }
 
 type Location struct {
@@ -48,11 +50,16 @@ func (loc Location) getQuerySubstring() string {
 type WeatherResponse struct {
 	Name string `json:"name"`
 	Main struct {
-		Temp float64 `json:"temp"`
+		Temp  float64 `json:"temp"`
+		Feels float64 `json:"feels_like"`
 	} `json:"main"`
 	Weather []struct {
+		Main        string `json:"main"`
 		Description string `json:"description"`
 	} `json:"weather"`
+	Sys struct {
+		Country string `json:"Country"`
+	} `json:"sys"`
 }
 
 func getConfigPath(filename string) string {
@@ -107,7 +114,9 @@ func GetWeather(loc Location) (Weather, error) {
 
 	return Weather{
 		data.Name,
+		data.Sys.Country,
 		data.Main.Temp,
+		data.Main.Feels,
 		data.Weather[0].Description,
 	}, nil
 }

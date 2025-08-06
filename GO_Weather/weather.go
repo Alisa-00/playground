@@ -57,5 +57,5 @@ func getLocation(city string, country string, lat float64, lon float64) (api.Loc
 }
 
 func display(weather api.Weather) {
-	fmt.Printf("%s: %.1f°C, %s\n", weather.City, weather.Temp, weather.Desc)
+	fmt.Printf("%s,%s: %.1f°C, %s. It feels like %.1f°C\n", weather.City, weather.Country, weather.Temp, weather.Desc, weather.Feels)
 }
