@@ -3,7 +3,6 @@ package parse
 import (
 	"fmt"
 	"strings"
-	"weather/api"
 )
 
 var chars = map[string]rune{
@@ -39,24 +38,4 @@ func GetChar(units string) (rune, error) {
 	}
 
 	return unitChar, nil
-}
-
-func GetLocation(city string, country string, lat float64, lon float64) (api.Location, error) {
-
-	if lat != 0 || lon != 0 {
-		return api.Location{Latitude: lat, Longitude: lon}, nil
-	}
-
-	if city != "" {
-		if country != "" {
-			return api.Location{City: city, Country: country}, nil
-		}
-		return api.Location{City: city}, nil
-	}
-
-	if country != "" {
-		return api.Location{Country: country}, nil
-	}
-
-	return api.Location{}, fmt.Errorf("invalid input. city, country or latitude and longitude have to be valid")
 }

@@ -27,7 +27,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	location, err := parse.GetLocation(city, country, lat, lon)
+	location, err := api.CreateLocation(city, country, lat, lon)
 	if err != nil {
 		fmt.Println(err)
 		return

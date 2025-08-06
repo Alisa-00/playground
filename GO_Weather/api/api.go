@@ -47,6 +47,26 @@ func (loc Location) getQuerySubstring() string {
 	return ""
 }
 
+func CreateLocation(city string, country string, lat float64, lon float64) (Location, error) {
+
+	if lat != 0 || lon != 0 {
+		return Location{Latitude: lat, Longitude: lon}, nil
+	}
+
+	if city != "" {
+		if country != "" {
+			return Location{City: city, Country: country}, nil
+		}
+		return Location{City: city}, nil
+	}
+
+	if country != "" {
+		return Location{Country: country}, nil
+	}
+
+	return Location{}, fmt.Errorf("invalid input. city, country or latitude and longitude have to be valid")
+}
+
 type WeatherResponse struct {
 	Name string `json:"name"`
 	Main struct {
