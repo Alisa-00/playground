@@ -43,24 +43,25 @@ func main() {
 		return
 	}
 
+	// query API and display results
+	var weather api.Weather
 	if forecast {
-		weather, err := api.GetForecast(location, units)
+		weath, err := api.GetForecast(location, units)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		display(weather, char)
+		weather = weath
 	} else {
-		weather, err := api.GetWeather(location, units)
+		weath, err := api.GetWeather(location, units)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		display(weather, char)
+		weather = weath
 	}
 
-	// print on screen
-	//display(weather, char)
+	display(weather, char)
 }
 
 func display(weather api.Weather, char rune) {
@@ -68,6 +69,4 @@ func display(weather api.Weather, char rune) {
 	for _, day := range weather.List {
 		fmt.Printf("%s: %.1f°%c, %s. It feels like %.1f°%c\n", day.Date, day.Temp, char, day.Desc, day.Feels, char)
 	}
-
-	//fmt.Printf("%s,%s: %.1f°%c, %s. It feels like %.1f°%c\n", weather.City, weather.Country, weather.Temp, char, weather.Desc, weather.Feels, char)
 }
