@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const URL string = "http://api.openweathermap.org/data/2.5/weather"
+const baseUrl string = "http://api.openweathermap.org/data/2.5/weather"
 
 type Weather struct {
 	City    string
@@ -58,7 +58,7 @@ type WeatherResponse struct {
 		Description string `json:"description"`
 	} `json:"weather"`
 	Sys struct {
-		Country string `json:"Country"`
+		Country string `json:"country"`
 	} `json:"sys"`
 }
 
@@ -78,15 +78,15 @@ func getApiKey() (string, error) {
 	return strings.TrimSpace(string(data)), nil
 }
 
-func GetWeather(loc Location) (Weather, error) {
+func GetWeather(loc Location, units string) (Weather, error) {
 
-	const url string = URL
+	const url string = baseUrl
 	apiKey, err := getApiKey()
 	if err != nil {
-		return Weather{}, fmt.Errorf("API Key not found")
+		return Weather{}, err
 	}
 	locationParams := loc.getQuerySubstring()
-	query := fmt.Sprintf("%s?%s&appid=%s&units=metric", url, locationParams, apiKey)
+	query := fmt.Sprintf("%s?%s&appid=%s&units=%s", url, locationParams, apiKey, units)
 
 	resp, err := http.Get(query)
 	if err != nil {
