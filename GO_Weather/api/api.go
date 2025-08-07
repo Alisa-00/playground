@@ -16,13 +16,21 @@ const forecastEndpoint string = "forecast"
 const dateFormat = time.Stamp
 const apiKeyEnvName string = "OPENWEATHER_API_KEY"
 
+type QueryType int
+
+const (
+	Current QueryType = iota
+	Forecast
+)
+
 type Weather struct {
+	Type    QueryType
 	City    string
 	Country string
-	List    []weatherDay
+	List    []WeatherDay
 }
 
-type weatherDay struct {
+type WeatherDay struct {
 	Temp  float64
 	Feels float64
 	Desc  string
@@ -120,7 +128,7 @@ func getApiKey() (string, error) {
 	return apiKey, nil
 }
 
-func GetWeather(loc Location, units string) (Weather, error) {
+func GetCurrentWeather(loc Location, units string) (Weather, error) {
 
 	apiKey, err := getApiKey()
 	if err != nil {
@@ -155,9 +163,10 @@ func GetWeather(loc Location, units string) (Weather, error) {
 	}
 
 	return Weather{
+		Type:    QueryType(Current),
 		City:    data.Name,
 		Country: data.Sys.Country,
-		List: []weatherDay{
+		List: []WeatherDay{
 			{
 				Temp:  data.Main.Temp,
 				Feels: data.Main.Feels,
@@ -202,9 +211,9 @@ func GetForecast(loc Location, units string) (Weather, error) {
 		return Weather{}, fmt.Errorf("no forecast data found")
 	}
 
-	weatherList := make([]weatherDay, 0)
+	weatherList := make([]WeatherDay, 0)
 	for _, data := range data.List {
-		day := weatherDay{
+		day := WeatherDay{
 			Temp:  data.Main.Temp,
 			Feels: data.Main.Feels,
 			Desc:  data.Weather[0].Description,
@@ -214,6 +223,7 @@ func GetForecast(loc Location, units string) (Weather, error) {
 	}
 
 	return Weather{
+		Type:    QueryType(Forecast),
 		City:    data.City.Name,
 		Country: data.City.Country,
 		List:    weatherList,

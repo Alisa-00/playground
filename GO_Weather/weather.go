@@ -44,6 +44,30 @@ func main() {
 		return
 	}
 
+	// try to fetch from cache
+
+	queryCache, err := api.LoadCacheFile()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	queryType := "current"
+	if forecast {
+		queryType = "forecast"
+	}
+
+	cacheWeather, err := queryCache.ReadCC(location.City, queryType)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	if len(cacheWeather.List) > 0 {
+		fmt.Println("Cache hit!")
+		display(cacheWeather, char)
+		return
+	}
+
 	// query API and display results
 	var weather api.Weather
 	if forecast {
@@ -54,12 +78,23 @@ func main() {
 		}
 		weather = weath
 	} else {
-		weath, err := api.GetWeather(location, units)
+		weath, err := api.GetCurrentWeather(location, units)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 		weather = weath
+	}
+
+	err = queryCache.Put(weather)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	err = queryCache.SaveCacheFile()
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 
 	display(weather, char)
