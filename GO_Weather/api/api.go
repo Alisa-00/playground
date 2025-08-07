@@ -6,8 +6,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 )
@@ -16,6 +14,7 @@ const baseUrl string = "http://api.openweathermap.org/data/2.5"
 const weatherEndpoint string = "weather"
 const forecastEndpoint string = "forecast"
 const dateFormat = time.Stamp
+const apiKeyEnvName string = "OPENWEATHER_API_KEY"
 
 type Weather struct {
 	City    string
@@ -111,20 +110,14 @@ func CreateLocation(city string, country string, lat float64, lon float64) (Loca
 	return Location{}, fmt.Errorf("invalid input. city, country or latitude and longitude have to be valid")
 }
 
-func getConfigPath(filename string) string {
-	_, b, _, _ := runtime.Caller(0)
-	basepath := filepath.Dir(b)
-	return filepath.Join(basepath, filename)
-}
-
 func getApiKey() (string, error) {
-	apiKeyPath := getConfigPath(".apikey")
-	data, err := os.ReadFile(apiKeyPath)
-	if err != nil {
-		return "", fmt.Errorf("error reading the api key: %w", err)
+	apiKey := os.Getenv(apiKeyEnvName)
+
+	if apiKey == "" {
+		return "", fmt.Errorf("api key unavailable. $%s is not set", apiKeyEnvName)
 	}
 
-	return strings.TrimSpace(string(data)), nil
+	return apiKey, nil
 }
 
 func GetWeather(loc Location, units string) (Weather, error) {

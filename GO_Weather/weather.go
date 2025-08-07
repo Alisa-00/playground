@@ -19,6 +19,7 @@ func main() {
 	flag.StringVar(&country, "C", "", "Shorthand for country code")
 	flag.StringVar(&units, "units", "metric", "Units for displaying")
 	flag.StringVar(&units, "u", "metric", "Shorthand for units")
+	flag.BoolVar(&forecast, "forecast", false, "Forecast")
 	flag.BoolVar(&forecast, "f", false, "Forecast")
 	flag.Float64Var(&lat, "lat", 0, "Latitude")
 	flag.Float64Var(&lon, "lon", 0, "Longitude")
