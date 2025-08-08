@@ -62,8 +62,8 @@ func main() {
 		return
 	}
 
+	// Cache hit!
 	if len(cacheWeather.List) > 0 {
-		fmt.Println("Cache hit!")
 		display(cacheWeather, char)
 		return
 	}
@@ -103,6 +103,6 @@ func main() {
 func display(weather api.Weather, char rune) {
 	fmt.Printf("%s,%s\n", weather.City, weather.Country)
 	for _, day := range weather.List {
-		fmt.Printf("%s: %.1f°%c, %s. It feels like %.1f°%c\n", day.Date, day.Temp, char, day.Desc, day.Feels, char)
+		fmt.Printf("%s: %.1f°%c, %s. It feels like %.1f°%c\n", day.Date.Format(api.DateFormat), day.Temp, char, day.Desc, day.Feels, char)
 	}
 }

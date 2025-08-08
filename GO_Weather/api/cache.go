@@ -6,12 +6,15 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const cacheFile string = ".cache"
 const tempCacheFile string = ".cache_temp"
 const configDir string = ".config"
 const appDir string = "go_weather_cli"
+const hoursInvalidateCurrent float64 = 0.167
+const hoursInvalidateForecast float64 = 3
 
 type Cache map[string]Weather
 
@@ -39,6 +42,25 @@ func LoadCacheFile() (*Cache, error) {
 	err = json.Unmarshal(bytes, &cache)
 	if err != nil {
 		return &cache, err
+	}
+
+	// invalidate outdated entries
+
+	for key, weather := range cache {
+		if strings.Contains(key, "current") {
+			weatherDate := weather.List[0].Date
+			hours := time.Since(weatherDate).Abs().Hours()
+			if hours > hoursInvalidateCurrent {
+				delete(cache, key)
+			}
+		}
+		if strings.Contains(key, "forecast") {
+			weatherDate := weather.List[0].Date
+			hours := time.Since(weatherDate).Abs().Hours()
+			if hours > hoursInvalidateForecast {
+				delete(cache, key)
+			}
+		}
 	}
 
 	return &cache, nil

@@ -13,7 +13,7 @@ import (
 const baseUrl string = "http://api.openweathermap.org/data/2.5"
 const weatherEndpoint string = "weather"
 const forecastEndpoint string = "forecast"
-const dateFormat = time.Stamp
+const DateFormat = time.Stamp
 const apiKeyEnvName string = "OPENWEATHER_API_KEY"
 
 type QueryType int
@@ -34,7 +34,7 @@ type WeatherDay struct {
 	Temp  float64
 	Feels float64
 	Desc  string
-	Date  string
+	Date  time.Time // do actual time type and format on prints
 }
 
 type Location struct {
@@ -171,7 +171,7 @@ func GetCurrentWeather(loc Location, units string) (Weather, error) {
 				Temp:  data.Main.Temp,
 				Feels: data.Main.Feels,
 				Desc:  data.Weather[0].Description,
-				Date:  time.Unix(data.Date, 0).Format(dateFormat),
+				Date:  time.Unix(data.Date, 0),
 			},
 		},
 	}, nil
@@ -217,7 +217,7 @@ func GetForecast(loc Location, units string) (Weather, error) {
 			Temp:  data.Main.Temp,
 			Feels: data.Main.Feels,
 			Desc:  data.Weather[0].Description,
-			Date:  time.Unix(data.Date, 0).Format(dateFormat),
+			Date:  time.Unix(data.Date, 0),
 		}
 		weatherList = append(weatherList, day)
 	}
