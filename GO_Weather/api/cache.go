@@ -191,18 +191,16 @@ func ValidateCacheEntry(queryType QueryType, date time.Time) bool {
 func (cache Cache) Put(weather Weather) error {
 
 	ccCacheKey, err := getCacheKeyCC(weather.City, weather.Country, weather.Type)
-	if err != nil {
-		return err
+	if err == nil {
+		cache[ccCacheKey] = weather
 	}
+
 	llCacheKey, err := getCacheKeyLL(weather.Lat, weather.Lon, weather.Type)
-	if err != nil {
-		return err
+	if err == nil {
+		cache[llCacheKey] = weather
 	}
 
-	cache[ccCacheKey] = weather
-	cache[llCacheKey] = weather
-
-	return nil
+	return err
 }
 
 func (cache Cache) ReadCC(loc Location, queryType string) (Weather, error) {
