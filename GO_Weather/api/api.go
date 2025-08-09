@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -163,13 +162,9 @@ func fetchWeather[T any](queryUrl string) (T, error) {
 		return data, fmt.Errorf("bad status code: %s (status code %d)", resp.Status, resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
-		return data, fmt.Errorf("error reading response: %w", err)
-	}
-
-	if err := json.Unmarshal(body, &data); err != nil {
-		return data, fmt.Errorf("invalid JSON: %w", err)
+		return data, err
 	}
 
 	return data, nil
