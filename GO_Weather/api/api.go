@@ -26,6 +26,8 @@ type Weather struct {
 	Type    QueryType
 	City    string
 	Country string
+	Lat     float64
+	Lon     float64
 	List    []WeatherDay
 }
 
@@ -49,6 +51,10 @@ type WeatherResponse struct {
 		Temp  float64 `json:"temp"`
 		Feels float64 `json:"feels_like"`
 	} `json:"main"`
+	Coord struct {
+		Lon float64 `json:"lon"`
+		Lat float64 `json:"lat"`
+	} `json:"coord"`
 	Weather []struct {
 		Main        string `json:"main"`
 		Description string `json:"description"`
@@ -74,6 +80,10 @@ type ForecastResponse struct {
 	City struct {
 		Name    string `json:"name"`
 		Country string `json:"country"`
+		Coord   struct {
+			Lat float64 `json:"lat"`
+			Lon float64 `json:"lon"`
+		} `json:"coord"`
 	} `json:"city"`
 }
 
@@ -189,6 +199,9 @@ func GetCurrentWeather(loc Location, units string) (Weather, error) {
 
 	weatherData.City = data.Name
 	weatherData.Country = data.Sys.Country
+	weatherData.Lat = data.Coord.Lat
+	weatherData.Lon = data.Coord.Lon
+
 	weatherData.List = []WeatherDay{
 		{
 			Temp:  data.Main.Temp,
@@ -220,6 +233,8 @@ func GetForecast(loc Location, units string) (Weather, error) {
 
 	weatherData.City = data.City.Name
 	weatherData.Country = data.City.Country
+	weatherData.Lat = data.City.Coord.Lat
+	weatherData.Lon = data.City.Coord.Lon
 
 	weatherList := make([]WeatherDay, 0)
 	for _, data := range data.List {
