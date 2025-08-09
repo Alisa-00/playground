@@ -155,6 +155,10 @@ func getCacheKeyLL(lat float64, lon float64, queryType QueryType) (string, error
 
 func (cache Cache) invalidateCache() {
 	for key, weather := range cache {
+		if len(weather.List) == 0 {
+			delete(cache, key)
+			continue
+		}
 		valid := ValidateCacheEntry(weather.Type, weather.List[0].Date)
 		if !valid {
 			delete(cache, key)
