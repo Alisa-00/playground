@@ -185,12 +185,12 @@ func GetCurrentWeather(loc Location, units string) (Weather, error) {
 	weatherData := Weather{Type: QueryType(Current)}
 	query, err := loc.getQueryString(weatherData.Type, units)
 	if err != nil {
-		return weatherData, nil
+		return weatherData, err
 	}
 
 	data, err := fetchWeather[WeatherResponse](query)
 	if err != nil {
-		return weatherData, nil
+		return weatherData, err
 	}
 
 	if len(data.Weather) == 0 {
@@ -224,7 +224,7 @@ func GetForecast(loc Location, units string) (Weather, error) {
 
 	data, err := fetchWeather[ForecastResponse](query)
 	if err != nil {
-		return weatherData, nil
+		return weatherData, err
 	}
 
 	if len(data.List) == 0 {
