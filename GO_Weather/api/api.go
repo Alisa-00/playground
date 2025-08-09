@@ -113,7 +113,7 @@ func (loc Location) getQueryString(queryType QueryType, units string) (string, e
 	baseQuery := fmt.Sprintf("%s?appid=%s&units=%s", url, apiKey, units)
 
 	if loc.Latitude != 0 || loc.Longitude != 0 {
-		return fmt.Sprintf("%s&lat=%f&lon=%f", url, loc.Latitude, loc.Longitude), nil
+		return fmt.Sprintf("%s&lat=%f&lon=%f", baseQuery, loc.Latitude, loc.Longitude), nil
 	}
 
 	if loc.City != "" {
