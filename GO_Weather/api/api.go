@@ -34,7 +34,7 @@ type WeatherDay struct {
 	Temp  float64
 	Feels float64
 	Desc  string
-	Date  time.Time // do actual time type and format on prints
+	Date  time.Time
 }
 
 type Location struct {
@@ -78,24 +78,47 @@ type ForecastResponse struct {
 	} `json:"city"`
 }
 
-func (loc Location) getQuerySubstring() string {
+func (loc Location) getQueryString(queryType QueryType, units string) (string, error) {
+
+	url := baseUrl + "/"
+
+	switch queryType {
+	case QueryType(Current):
+		{
+			url += weatherEndpoint
+		}
+	case QueryType(Forecast):
+		{
+			url += forecastEndpoint
+		}
+	default:
+		{
+			return "", fmt.Errorf("invalid query type")
+		}
+	}
+
+	apiKey, err := getApiKey()
+	if err != nil {
+		return "", err
+	}
+	baseQuery := fmt.Sprintf("%s?appid=%s&units=%s", url, apiKey, units)
 
 	if loc.Latitude != 0 || loc.Longitude != 0 {
-		return fmt.Sprintf("lat=%f&lon=%f", loc.Latitude, loc.Longitude)
+		return fmt.Sprintf("%s&lat=%f&lon=%f", loc.Latitude, loc.Longitude), nil
 	}
 
 	if loc.City != "" {
 		if loc.Country != "" {
-			return fmt.Sprintf("q=%s,%s", strings.ReplaceAll(loc.City, " ", "+"), loc.Country)
+			return fmt.Sprintf("%s&q=%s,%s", baseQuery, strings.ReplaceAll(loc.City, " ", "+"), loc.Country), nil
 		}
-		return fmt.Sprintf("q=%s", strings.ReplaceAll(loc.City, " ", "+"))
+		return fmt.Sprintf("%s&q=%s", baseQuery, strings.ReplaceAll(loc.City, " ", "+")), nil
 	}
 
 	if loc.Country != "" {
-		return fmt.Sprintf("q=%s", loc.Country)
+		return fmt.Sprintf("%s&q=%s", baseQuery, loc.Country), nil
 	}
 
-	return ""
+	return "", fmt.Errorf("missing values, query was not constructed")
 }
 
 func CreateLocation(city string, country string, lat float64, lon float64) (Location, error) {
@@ -128,88 +151,80 @@ func getApiKey() (string, error) {
 	return apiKey, nil
 }
 
-func GetCurrentWeather(loc Location, units string) (Weather, error) {
-
-	apiKey, err := getApiKey()
+func fetchWeather[T any](queryUrl string) (T, error) {
+	var data T
+	resp, err := http.Get(queryUrl)
 	if err != nil {
-		return Weather{}, err
-	}
-
-	locationParams := loc.getQuerySubstring()
-	query := fmt.Sprintf("%s/%s?%s&appid=%s&units=%s", baseUrl, weatherEndpoint, locationParams, apiKey, units)
-
-	resp, err := http.Get(query)
-	if err != nil {
-		return Weather{}, fmt.Errorf("request failed: %w", err)
+		return data, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return Weather{}, fmt.Errorf("bad status code: %s (status code %d)", resp.Status, resp.StatusCode)
+		return data, fmt.Errorf("bad status code: %s (status code %d)", resp.Status, resp.StatusCode)
 	}
 
-	var data WeatherResponse
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return Weather{}, fmt.Errorf("error reading response: %w", err)
+		return data, fmt.Errorf("error reading response: %w", err)
 	}
 
 	if err := json.Unmarshal(body, &data); err != nil {
-		return Weather{}, fmt.Errorf("invalid JSON: %w", err)
+		return data, fmt.Errorf("invalid JSON: %w", err)
+	}
+
+	return data, nil
+}
+
+func GetCurrentWeather(loc Location, units string) (Weather, error) {
+
+	weatherData := Weather{Type: QueryType(Current)}
+	query, err := loc.getQueryString(weatherData.Type, units)
+	if err != nil {
+		return weatherData, nil
+	}
+
+	data, err := fetchWeather[WeatherResponse](query)
+	if err != nil {
+		return weatherData, nil
 	}
 
 	if len(data.Weather) == 0 {
-		return Weather{}, fmt.Errorf("no weather data found")
+		return weatherData, fmt.Errorf("no weather data found")
 	}
 
-	return Weather{
-		Type:    QueryType(Current),
-		City:    data.Name,
-		Country: data.Sys.Country,
-		List: []WeatherDay{
-			{
-				Temp:  data.Main.Temp,
-				Feels: data.Main.Feels,
-				Desc:  data.Weather[0].Description,
-				Date:  time.Unix(data.Date, 0),
-			},
+	weatherData.City = data.Name
+	weatherData.Country = data.Sys.Country
+	weatherData.List = []WeatherDay{
+		{
+			Temp:  data.Main.Temp,
+			Feels: data.Main.Feels,
+			Desc:  data.Weather[0].Description,
+			Date:  time.Unix(data.Date, 0),
 		},
-	}, nil
+	}
+
+	return weatherData, nil
 }
 
 func GetForecast(loc Location, units string) (Weather, error) {
 
-	apiKey, err := getApiKey()
+	weatherData := Weather{Type: QueryType(Forecast)}
+	query, err := loc.getQueryString(weatherData.Type, units)
 	if err != nil {
-		return Weather{}, err
+		return weatherData, err
 	}
 
-	locationParams := loc.getQuerySubstring()
-	query := fmt.Sprintf("%s/%s?%s&appid=%s&units=%s", baseUrl, forecastEndpoint, locationParams, apiKey, units)
-
-	resp, err := http.Get(query)
+	data, err := fetchWeather[ForecastResponse](query)
 	if err != nil {
-		return Weather{}, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return Weather{}, fmt.Errorf("bad status code: %s (status code %d)", resp.Status, resp.StatusCode)
-	}
-
-	var data ForecastResponse
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return Weather{}, fmt.Errorf("error reading response: %w", err)
-	}
-
-	if err := json.Unmarshal(body, &data); err != nil {
-		return Weather{}, fmt.Errorf("invalid JSON: %w", err)
+		return weatherData, nil
 	}
 
 	if len(data.List) == 0 {
-		return Weather{}, fmt.Errorf("no forecast data found")
+		return weatherData, fmt.Errorf("no forecast data found")
 	}
+
+	weatherData.City = data.City.Name
+	weatherData.Country = data.City.Country
 
 	weatherList := make([]WeatherDay, 0)
 	for _, data := range data.List {
@@ -221,11 +236,7 @@ func GetForecast(loc Location, units string) (Weather, error) {
 		}
 		weatherList = append(weatherList, day)
 	}
+	weatherData.List = weatherList
 
-	return Weather{
-		Type:    QueryType(Forecast),
-		City:    data.City.Name,
-		Country: data.City.Country,
-		List:    weatherList,
-	}, nil
+	return weatherData, nil
 }
