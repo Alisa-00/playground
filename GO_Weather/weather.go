@@ -62,10 +62,16 @@ func main() {
 		return
 	}
 
-	// Cache hit!
+	// cache entry exists!
 	if len(cacheWeather.List) > 0 {
-		display(cacheWeather, char)
-		return
+
+		// check if outdated!
+		valid := api.ValidateCacheEntry(cacheWeather.Type, cacheWeather.List[0].Date)
+		if valid {
+			// cache hit!
+			display(cacheWeather, char)
+			return
+		}
 	}
 
 	// query API and display results

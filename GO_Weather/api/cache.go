@@ -44,29 +44,13 @@ func LoadCacheFile() (*Cache, error) {
 		return &cache, err
 	}
 
-	// invalidate outdated entries
-
-	for key, weather := range cache {
-		if strings.Contains(key, "current") {
-			weatherDate := weather.List[0].Date
-			hours := time.Since(weatherDate).Abs().Hours()
-			if hours > hoursInvalidateCurrent {
-				delete(cache, key)
-			}
-		}
-		if strings.Contains(key, "forecast") {
-			weatherDate := weather.List[0].Date
-			hours := time.Since(weatherDate).Abs().Hours()
-			if hours > hoursInvalidateForecast {
-				delete(cache, key)
-			}
-		}
-	}
-
 	return &cache, nil
 }
 
 func (cache Cache) SaveCacheFile() error {
+
+	// invalidate old entries
+	cache.invalidateCache()
 
 	// get home dir and paths
 	homeDir, err := os.UserHomeDir()
@@ -123,6 +107,37 @@ func getCacheKey(city string, queryType QueryType) (string, error) {
 	}
 
 	return cacheKey, nil
+}
+
+func (cache Cache) invalidateCache() {
+	for key, weather := range cache {
+		valid := ValidateCacheEntry(weather.Type, weather.List[0].Date)
+		if !valid {
+			delete(cache, key)
+		}
+	}
+}
+
+func ValidateCacheEntry(queryType QueryType, date time.Time) bool {
+
+	hours := time.Since(date).Abs().Hours()
+
+	switch queryType {
+	case QueryType(Current):
+		{
+			if hours <= hoursInvalidateCurrent {
+				return true
+			}
+		}
+	case QueryType(Forecast):
+		{
+			if hours <= hoursInvalidateForecast {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (cache Cache) Put(weather Weather) error {
