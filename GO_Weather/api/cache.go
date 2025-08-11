@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-const cacheFile string = ".cache"
-const tempCacheFile string = ".cache_temp"
+const cacheFileName string = ".cache"
+const tempCacheFileName string = ".cache_temp"
 const configDir string = ".config"
 const appDir string = "go_weather_cli"
 const hoursInvalidateCurrent float64 = 0.167
@@ -28,7 +28,7 @@ func LoadCacheFile() (*Cache, error) {
 	}
 
 	configPath := filepath.Join(homeDir, configDir, appDir)
-	cacheFile := filepath.Join(configPath, cacheFile)
+	cacheFile := filepath.Join(configPath, cacheFileName)
 
 	// read from cache file
 	bytes, err := os.ReadFile(cacheFile)
@@ -57,8 +57,8 @@ func (cache Cache) SaveCacheFile() error {
 		return err
 	}
 	configPath := filepath.Join(homeDir, configDir, appDir)
-	cacheFile := filepath.Join(configPath, cacheFile)
-	tempCacheFile := filepath.Join(configPath, tempCacheFile)
+	cacheFile := filepath.Join(configPath, cacheFileName)
+	tempCacheFile := filepath.Join(configPath, tempCacheFileName)
 
 	// create dir if needed
 	err = os.MkdirAll(configPath, 0755)
@@ -86,10 +86,6 @@ func (cache Cache) SaveCacheFile() error {
 	return nil
 }
 
-func normalizeCoord(val float64) string {
-	return fmt.Sprintf("%.2f", val)
-}
-
 func getCacheKeyType(key string, queryType QueryType) (string, error) {
 
 	switch queryType {
@@ -110,41 +106,14 @@ func getCacheKeyType(key string, queryType QueryType) (string, error) {
 	return key, nil
 }
 
-func getCacheKeyCC(city string, country string, queryType QueryType) (string, error) {
+func getCacheKey(loc Location, queryType QueryType) (string, error) {
 
-	cacheKey := ""
-
-	if city != "" {
-		cacheKey += city
-		if country != "" {
-			cacheKey += "," + country
-		}
-	} else if country != "" {
-		cacheKey += country
-	} else {
-		return "", fmt.Errorf("invalid or missing data")
-	}
-
-	cacheKey, err := getCacheKeyType(cacheKey, queryType)
+	cacheKey, err := loc.CacheKey()
 	if err != nil {
 		return "", err
 	}
 
-	return cacheKey, nil
-
-}
-
-func getCacheKeyLL(lat float64, lon float64, queryType QueryType) (string, error) {
-
-	cacheKey := ""
-
-	if lat != 0 || lon != 0 {
-		cacheKey += normalizeCoord(lat) + "-" + normalizeCoord(lon)
-	} else {
-		return "", fmt.Errorf("invalid or missing data")
-	}
-
-	cacheKey, err := getCacheKeyType(cacheKey, queryType)
+	cacheKey, err = getCacheKeyType(cacheKey, queryType)
 	if err != nil {
 		return "", err
 	}
@@ -188,28 +157,23 @@ func ValidateCacheEntry(queryType QueryType, date time.Time) bool {
 	return false
 }
 
-func (cache Cache) Put(weather Weather) error {
+func (cache Cache) Put(loc Location, weather Weather) error {
 
-	ccCacheKey, err := getCacheKeyCC(weather.City, weather.Country, weather.Type)
+	ccCacheKey, err := getCacheKey(loc, weather.Type)
 	if err == nil {
 		cache[ccCacheKey] = weather
-	}
-
-	llCacheKey, err := getCacheKeyLL(weather.Lat, weather.Lon, weather.Type)
-	if err == nil {
-		cache[llCacheKey] = weather
 	}
 
 	return err
 }
 
-func (cache Cache) ReadCC(loc Location, queryType string) (Weather, error) {
+func (cache Cache) Read(loc Location, queryType string) (Weather, error) {
 
 	weather := Weather{}
 	switch queryType {
 	case "current":
 		{
-			cacheKey, err := getCacheKeyCC(loc.City, loc.Country, QueryType(Current))
+			cacheKey, err := getCacheKey(loc, QueryType(Current))
 			if err != nil {
 				return weather, err
 			}
@@ -218,37 +182,7 @@ func (cache Cache) ReadCC(loc Location, queryType string) (Weather, error) {
 		}
 	case "forecast":
 		{
-			cacheKey, err := getCacheKeyCC(loc.City, loc.Country, QueryType(Forecast))
-			if err != nil {
-				return weather, err
-			}
-			weather = cache[cacheKey]
-		}
-	default:
-		{
-			return weather, fmt.Errorf("invalid query type")
-		}
-	}
-
-	return weather, nil
-}
-
-func (cache Cache) ReadLL(loc Location, queryType string) (Weather, error) {
-
-	weather := Weather{}
-	switch queryType {
-	case "current":
-		{
-			cacheKey, err := getCacheKeyLL(loc.Latitude, loc.Longitude, QueryType(Current))
-			if err != nil {
-				return weather, err
-			}
-			weather = cache[cacheKey]
-
-		}
-	case "forecast":
-		{
-			cacheKey, err := getCacheKeyLL(loc.Latitude, loc.Longitude, QueryType(Forecast))
+			cacheKey, err := getCacheKey(loc, QueryType(Forecast))
 			if err != nil {
 				return weather, err
 			}

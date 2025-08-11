@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
-const baseUrl string = "http://api.openweathermap.org/data/2.5"
+const baseUrl string = "https://api.openweathermap.org/data/2.5"
 const weatherEndpoint string = "weather"
 const forecastEndpoint string = "forecast"
 const DateFormat = time.Stamp
@@ -36,13 +35,6 @@ type WeatherDay struct {
 	Feels float64
 	Desc  string
 	Date  time.Time
-}
-
-type Location struct {
-	City      string
-	Country   string
-	Latitude  float64
-	Longitude float64
 }
 
 type WeatherResponse struct {
@@ -87,18 +79,18 @@ type ForecastResponse struct {
 	} `json:"city"`
 }
 
-func (loc Location) getQueryString(queryType QueryType, units string) (string, error) {
+func getQueryString(loc Location, queryType QueryType, units string) (string, error) {
 
-	url := baseUrl + "/"
+	queryUrl := baseUrl + "/"
 
 	switch queryType {
 	case QueryType(Current):
 		{
-			url += weatherEndpoint
+			queryUrl += weatherEndpoint
 		}
 	case QueryType(Forecast):
 		{
-			url += forecastEndpoint
+			queryUrl += forecastEndpoint
 		}
 	default:
 		{
@@ -110,44 +102,33 @@ func (loc Location) getQueryString(queryType QueryType, units string) (string, e
 	if err != nil {
 		return "", err
 	}
-	baseQuery := fmt.Sprintf("%s?appid=%s&units=%s", url, apiKey, units)
 
-	if loc.Latitude != 0 || loc.Longitude != 0 {
-		return fmt.Sprintf("%s&lat=%f&lon=%f", baseQuery, loc.Latitude, loc.Longitude), nil
+	queryParams, err := loc.QueryParam()
+	if err != nil {
+		return "", err
 	}
 
-	if loc.City != "" {
-		if loc.Country != "" {
-			return fmt.Sprintf("%s&q=%s,%s", baseQuery, strings.ReplaceAll(loc.City, " ", "+"), loc.Country), nil
-		}
-		return fmt.Sprintf("%s&q=%s", baseQuery, strings.ReplaceAll(loc.City, " ", "+")), nil
-	}
-
-	if loc.Country != "" {
-		return fmt.Sprintf("%s&q=%s", baseQuery, loc.Country), nil
-	}
-
-	return "", fmt.Errorf("missing values, query was not constructed")
+	return fmt.Sprintf("%s?appid=%s&units=%s&%s", queryUrl, apiKey, units, queryParams), nil
 }
 
 func CreateLocation(city string, country string, lat float64, lon float64) (Location, error) {
 
 	if lat != 0 || lon != 0 {
-		return Location{Latitude: lat, Longitude: lon}, nil
+		return LatLon{Lat: lat, Lon: lon}, nil
 	}
 
 	if city != "" {
 		if country != "" {
-			return Location{City: city, Country: country}, nil
+			return CityCountry{City: city, Country: country}, nil
 		}
-		return Location{City: city}, nil
+		return CityCountry{City: city}, nil
 	}
 
 	if country != "" {
-		return Location{Country: country}, nil
+		return CityCountry{Country: country}, nil
 	}
 
-	return Location{}, fmt.Errorf("invalid input. city, country or latitude and longitude have to be valid")
+	return CityCountry{}, fmt.Errorf("invalid input. city, country or latitude and longitude have to be valid")
 }
 
 func getApiKey() (string, error) {
@@ -164,7 +145,7 @@ func fetchWeather[T any](queryUrl string) (T, error) {
 	var data T
 	resp, err := http.Get(queryUrl)
 	if err != nil {
-		return data, err
+		return data, fmt.Errorf("error executing query: %w. %s", err, queryUrl)
 	}
 	defer resp.Body.Close()
 
@@ -174,7 +155,7 @@ func fetchWeather[T any](queryUrl string) (T, error) {
 
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
-		return data, err
+		return data, fmt.Errorf("error decoding JSON response: %w. %s", err, queryUrl)
 	}
 
 	return data, nil
@@ -183,7 +164,7 @@ func fetchWeather[T any](queryUrl string) (T, error) {
 func GetCurrentWeather(loc Location, units string) (Weather, error) {
 
 	weatherData := Weather{Type: QueryType(Current)}
-	query, err := loc.getQueryString(weatherData.Type, units)
+	query, err := getQueryString(loc, weatherData.Type, units)
 	if err != nil {
 		return weatherData, err
 	}
@@ -217,7 +198,7 @@ func GetCurrentWeather(loc Location, units string) (Weather, error) {
 func GetForecast(loc Location, units string) (Weather, error) {
 
 	weatherData := Weather{Type: QueryType(Forecast)}
-	query, err := loc.getQueryString(weatherData.Type, units)
+	query, err := getQueryString(loc, weatherData.Type, units)
 	if err != nil {
 		return weatherData, err
 	}
