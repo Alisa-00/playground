@@ -12,8 +12,8 @@ const cacheFileName string = ".cache"
 const tempCacheFileName string = ".cache_temp"
 const configDir string = ".config"
 const appDir string = "go_weather_cli"
-const hoursInvalidateCurrent float64 = 0.167
-const hoursInvalidateForecast float64 = 3
+const invalidateCurrent = 10 * time.Minute
+const invalidateForecast = 3 * time.Hour
 
 type Cache map[string]Weather
 
@@ -137,18 +137,18 @@ func (cache Cache) invalidateCache() {
 
 func ValidateCacheEntry(queryType QueryType, date time.Time) bool {
 
-	hours := time.Since(date).Abs().Hours()
+	timeSpan := time.Since(date)
 
 	switch queryType {
 	case QueryType(Current):
 		{
-			if hours <= hoursInvalidateCurrent {
+			if timeSpan <= invalidateCurrent {
 				return true
 			}
 		}
 	case QueryType(Forecast):
 		{
-			if hours <= hoursInvalidateForecast {
+			if timeSpan <= invalidateForecast {
 				return true
 			}
 		}
