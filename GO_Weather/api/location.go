@@ -42,10 +42,10 @@ func (cc CityCountry) CacheKey() (string, error) {
 
 	if city != "" {
 		cacheKey += city
-		if country != "" {
+		if countryCode != "" {
 			cacheKey += "," + countryCode
 		}
-	} else if country != "" {
+	} else if countryCode != "" {
 		cacheKey += countryCode
 	} else {
 		return "", fmt.Errorf("invalid or missing data")
