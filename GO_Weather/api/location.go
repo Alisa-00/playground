@@ -20,13 +20,13 @@ func (cc CityCountry) QueryParam() (string, error) {
 
 	if cc.City != "" {
 		if cc.Country != "" {
-			return fmt.Sprintf("q=%s,%s", url.QueryEscape(cc.City), cc.Country), nil
+			return fmt.Sprintf("q=%s,%s", url.QueryEscape(cc.City), url.QueryEscape(cc.Country)), nil
 		}
 		return fmt.Sprintf("q=%s", url.QueryEscape(cc.City)), nil
 	}
 
 	if cc.Country != "" {
-		return fmt.Sprintf("q=%s", cc.Country), nil
+		return fmt.Sprintf("q=%s", url.QueryEscape(cc.Country)), nil
 	}
 
 	return "", fmt.Errorf("missing values")
