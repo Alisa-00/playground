@@ -38,15 +38,15 @@ func (cc CityCountry) CacheKey() (string, error) {
 	cacheKey := ""
 	city := strings.ToLower(cc.City)
 	country := strings.ToLower(cc.Country)
-	//countryCode := countryCodes[country]
+	countryCode := CountryCodes[country]
 
 	if city != "" {
 		cacheKey += city
 		if country != "" {
-			cacheKey += "," + country
+			cacheKey += "," + countryCode
 		}
 	} else if country != "" {
-		cacheKey += country
+		cacheKey += countryCode
 	} else {
 		return "", fmt.Errorf("invalid or missing data")
 	}
