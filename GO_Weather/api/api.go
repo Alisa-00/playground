@@ -13,6 +13,7 @@ const weatherEndpoint string = "weather"
 const forecastEndpoint string = "forecast"
 const DateFormat = time.Stamp
 const apiKeyEnvName string = "OPENWEATHER_API_KEY"
+const timeout = 6 * time.Second
 
 type QueryType int
 
@@ -143,7 +144,8 @@ func getApiKey() (string, error) {
 
 func fetchWeather[T any](queryUrl string) (T, error) {
 	var data T
-	resp, err := http.Get(queryUrl)
+	var httpClient = &http.Client{Timeout: timeout}
+	resp, err := httpClient.Get(queryUrl)
 	if err != nil {
 		return data, fmt.Errorf("error executing query: %w. %s", err, queryUrl)
 	}
