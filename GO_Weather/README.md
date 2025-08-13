@@ -14,10 +14,8 @@ Uses [OpenWeatherMap API](https://openweathermap.org/api) to fetch current condi
   - Support for displaying different temperature units
 
 - **Caching**
-  - Reduces redundant API calls by storing responses in JSON cache files.
-  - Separate cache files per query type (`current` / `forecast`) for better performance.
-  - Automatic cache invalidation after a configurable time limit.
-  - Compact cache key format for both location types.
+  - Reduces redundant API calls by storing responses in a JSON cache file.
+  - Automatic cache invalidation after a time limit.
 
 ## Usage
 
