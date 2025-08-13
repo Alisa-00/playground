@@ -22,21 +22,21 @@ Uses [OpenWeatherMap API](https://openweathermap.org/api) to fetch current condi
 ```bash
 # Current weather by city and country
 go run . -c Paris -C France
-```
+
 Paris,FR
 Aug 13 12:22:00: 28.7°C, clear sky. It feels like 29.5°C
 
-```bash
+
 # Current weather by coordinates
 go run . -lat 48.8566 -lon 2.3522
-```
+
 Paris,FR
 Aug 13 12:23:46: 28.6°C, clear sky. It feels like 29.4°C
 
-```bash
+
 # Forecast by city and country
 go run . -c "New York" -C America -f -u F
-```
+
 New York,US
 Aug 13 15:00:00: 24.0°F, light rain. It feels like 24.7°F
 Aug 13 18:00:00: 28.4°F, scattered clouds. It feels like 31.0°F
@@ -78,3 +78,4 @@ Aug 18 03:00:00: 28.1°F, light rain. It feels like 30.1°F
 Aug 18 06:00:00: 27.2°F, scattered clouds. It feels like 29.2°F
 Aug 18 09:00:00: 26.0°F, light rain. It feels like 26.0°F
 Aug 18 12:00:00: 24.8°F, light rain. It feels like 25.3°F
+```
