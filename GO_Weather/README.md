@@ -19,15 +19,6 @@ Uses [OpenWeatherMap API](https://openweathermap.org/api) to fetch current condi
   - Automatic cache invalidation after a configurable time limit.
   - Compact cache key format for both location types.
 
-- **Data-Oriented Design**
-  - Clear separation of packages (`api`, `cache`, `parser`, etc.).
-  - Location abstraction: unified handling of coordinates and named locations.
-  - Easy to extend with additional data sources or output formats.
-
-- **Robust Testing**
-  - Unit tests for core logic such as cache key generation and location parsing.
-  - Focus on edge cases and correctness.
-
 ## Usage
 
 ```bash
